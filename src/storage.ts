@@ -7,6 +7,7 @@ export interface SaveData {
   glow: boolean | null; // null = otomatis
 }
 
+// Nama lama sengaja dipertahankan, supaya rekor pemain tidak hilang setelah game berganti nama.
 const KEY = 'lumen-survivor-v1';
 const defaults: SaveData = { bestTime: 0, bestKills: 0, bestLevel: 0, glow: null };
 

@@ -3,19 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#0d0e1a" />
+    <meta name="theme-color" content="#140d08" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <title>Lumen Survivor</title>
+    <meta name="apple-mobile-web-app-title" content="Ravenhold" />
+    <title>Ravenhold Survivor</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/src/art/favicon-32.png" />
+    <link rel="icon" type="image/svg+xml" href="/src/art/favicon.svg" />
+    <link rel="apple-touch-icon" href="/src/art/apple-touch-icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Unbounded:wght@500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Manrope:wght@400;500;600;700&family=Unbounded:wght@500;600;700&display=swap"
     />
   </head>
   <body>
     <div id="app">
       <div id="game"></div>
+      <div id="vignette"></div>
 
       <!-- Area sentuh untuk joystick melayang -->
       <div id="touch-layer">
@@ -27,7 +32,7 @@
       <header id="hud" hidden>
         <div class="xp"><div id="xp-fill"></div></div>
         <div class="hud-row">
-          <div class="chip"><span class="chip-label">Lv</span><b id="lvl">1</b></div>
+          <div class="chip"><span class="chip-label">Lv</span><b id="lvl">1</b><span id="lvl-max" class="chip-label"></span></div>
           <div id="timer" class="timer">00:00</div>
           <div class="hud-right">
             <div class="chip" title="Musuh dikalahkan">
@@ -39,39 +44,49 @@
             </button>
           </div>
         </div>
+        <div id="boss-bar" class="boss-bar" hidden>
+          <div id="boss-name" class="boss-name"></div>
+          <div class="boss-track"><div id="boss-fill"></div></div>
+        </div>
+        <div id="specials" class="specials" hidden></div>
       </header>
       <div id="toast" role="status" aria-live="polite"></div>
 
       <!-- Layar mulai -->
       <section id="screen-start" class="screen start" hidden>
         <div class="start-panel">
-          <p class="eyebrow">Survival · 10 menit</p>
-          <h1 class="logo">Lumen<span>Survivor</span></h1>
-          <p class="lede">Gerombolan bentuk gelap datang dari segala arah. Kumpulkan kristal cahaya, naik level, dan pilih kekuatan baru sampai waktu habis.</p>
+          <p id="start-eyebrow" class="eyebrow">Survival</p>
+          <div class="brand">
+            <img class="brand-crest" src="/src/art/logo.svg" alt="" width="88" height="94" />
+            <h1 class="logo">Ravenhold<span>Survivor</span></h1>
+          </div>
+          <p class="lede">Gerombolan monster menyerbu reruntuhan Ravenhold dari segala arah. Kumpulkan kristal, naik level, dan rebut senjata pusaka sampai fajar menjelang.</p>
           <button id="btn-start" class="btn primary" type="button">Mulai</button>
           <p id="best" class="best" hidden></p>
           <p id="controls-hint" class="hint"></p>
           <label class="toggle">
             <input id="opt-glow" type="checkbox" checked />
             <span class="track"><span class="thumb"></span></span>
-            <span>Efek cahaya (bloom)</span>
+            <span>Efek cahaya</span>
           </label>
         </div>
       </section>
 
       <!-- Naik level -->
       <section id="screen-levelup" class="screen modal" hidden>
-        <div class="levelup">
-          <p class="eyebrow">Naik level</p>
-          <h2 id="levelup-title" class="title">Level 2</h2>
-          <p class="sub">Pilih satu kekuatan</p>
+        <div id="levelup-panel" class="levelup">
+          <p id="levelup-eyebrow" class="levelup-eyebrow">Naik level</p>
+          <h2 id="levelup-title" class="levelup-title">Level 2</h2>
+          <p id="levelup-sub" class="levelup-sub">Pilih satu kekuatan</p>
           <div id="cards" class="cards"></div>
+          <div id="loadout" class="loadout" hidden></div>
         </div>
       </section>
 
       <!-- Jeda -->
       <section id="screen-pause" class="screen modal" hidden>
         <div class="panel">
+          <img class="panel-crest" src="/src/art/logo.svg" alt="" width="52" height="55" />
           <p class="eyebrow">Permainan dijeda</p>
           <h2 class="title">Jeda</h2>
           <div class="stack">
@@ -82,7 +97,7 @@
           <label class="toggle">
             <input id="opt-glow-2" type="checkbox" checked />
             <span class="track"><span class="thumb"></span></span>
-            <span>Efek cahaya (bloom)</span>
+            <span>Efek cahaya</span>
           </label>
         </div>
       </section>
@@ -90,9 +105,11 @@
       <!-- Akhir ronde -->
       <section id="screen-end" class="screen modal" hidden>
         <div class="panel">
-          <p id="end-eyebrow" class="eyebrow">Cahaya padam</p>
+          <img class="panel-crest" src="/src/art/logo.svg" alt="" width="52" height="55" />
+          <p id="end-eyebrow" class="eyebrow">Perjalanan berakhir</p>
           <h2 id="end-title" class="title">Game over</h2>
           <p id="end-record" class="record" hidden>Rekor baru</p>
+          <p id="end-redirect" class="end-redirect" hidden>Kembali ke menu utama dalam <b id="end-redirect-count">6</b> detik</p>
           <dl class="stats">
             <div><dt>Waktu</dt><dd id="end-time">00:00</dd></div>
             <div><dt>Musuh</dt><dd id="end-kills">0</dd></div>

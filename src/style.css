@@ -1,17 +1,35 @@
-/* Lumen Survivor — UI di atas canvas.
-   Arah desain: panel kaca gelap di atas dunia neon, angka besar dengan Unbounded,
-   teks bacaan dengan Manrope. Satu aksen (cyan pemain), emas untuk hal spesial. */
+/* Ravenhold Survivor — UI di atas canvas.
+   Arah desain: panel kayu gelap dengan teks perkamen, aksen amber, emas untuk hal spesial.
+   Panel sengaja padat tanpa backdrop-filter: blur di atas canvas WebGL harus dihitung ulang
+   setiap frame dan menurunkan fps di HP. */
 :root {
-  --ink: #0d0e1a;
-  --ink-2: #14162a;
-  --panel: rgba(18, 20, 36, 0.74);
-  --line: rgba(214, 222, 255, 0.11);
-  --text: #eef0ff;
-  --muted: #9a9fc2;
-  --accent: #8ff3ff;
+  --ink: #140d08;
+  --ink-2: #1e140c;
+  --panel: rgba(34, 22, 13, 0.88);
+  --line: rgba(214, 178, 118, 0.3);
+  --text: #f5e9cf;
+  --muted: #c4ad87;
+  --accent: #e8b558;
+  --accent-bright: #f5cc7c;
+  --vignette: rgba(18, 12, 8, 0.46);
   --mint: #86f7c0;
   --gold: #ffe27a;
-  --danger: #ff7b8a;
+  --danger: #f0785a;
+  --parchment: #ead9b0;
+  --parchment-deep: #cdb582;
+  --ink-brown: #2c1d12;
+  --ink-brown-soft: #5f4730;
+  --wood: #2a1b12;
+  --wood-light: #4a3120;
+  --bronze: #9c7338;
+  --weapon: #a8452c;
+  --passive: #3f6e4c;
+  --special: #ffcf6b;
+  --special-deep: #b5722a;
+  --rare: #d8d2c0;
+  --rare-deep: #7d7564;
+  --epic: #c94230;
+  --font-heraldic: 'Cinzel', Georgia, 'Times New Roman', serif;
   --font-display: 'Unbounded', 'Segoe UI', system-ui, sans-serif;
   --font-body: 'Manrope', 'Segoe UI', system-ui, -apple-system, sans-serif;
   --radius: 20px;
@@ -59,6 +77,14 @@ body {
   display: none !important;
 }
 
+/* Vignette sebagai lapisan statis, jadi kamera tidak perlu menggambar ke framebuffer tambahan */
+#vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 58%, var(--vignette) 100%);
+}
+
 /* ------------------------------------------------------------ Joystick */
 #touch-layer {
   position: absolute;
@@ -77,8 +103,8 @@ body {
   height: 112px;
   margin: -56px 0 0 -56px;
   border-radius: 50%;
-  border: 1.5px solid rgba(143, 243, 255, 0.28);
-  background: radial-gradient(circle, rgba(143, 243, 255, 0.08), rgba(143, 243, 255, 0.02) 70%);
+  border: 1.5px solid rgba(232, 181, 88, 0.4);
+  background: radial-gradient(circle, rgba(232, 181, 88, 0.12), rgba(232, 181, 88, 0.03) 70%);
   opacity: 0;
   transition: opacity 0.15s;
   pointer-events: none;
@@ -94,8 +120,8 @@ body {
   height: 46px;
   margin: -23px 0 0 -23px;
   border-radius: 50%;
-  background: rgba(143, 243, 255, 0.55);
-  box-shadow: 0 0 24px rgba(143, 243, 255, 0.45);
+  background: rgba(232, 181, 88, 0.6);
+  box-shadow: 0 0 16px rgba(232, 181, 88, 0.4);
 }
 
 /* ------------------------------------------------------------ Efek terkena serangan */
@@ -104,7 +130,9 @@ body {
   inset: 0;
   pointer-events: none;
   opacity: 0;
-  box-shadow: inset 0 0 120px 20px rgba(255, 70, 100, 0.55);
+  box-shadow: inset 0 0 120px 20px rgba(200, 44, 24, 0.55);
+  /* Satu lapisan GPU: bayangan selebar layar cukup dilukis sekali, lalu hanya opacity yang berubah */
+  will-change: opacity;
 }
 #hurt.flash {
   animation: hurt 0.45s ease-out;
@@ -129,12 +157,11 @@ body {
   position: absolute;
   inset: 0 0 auto;
   height: calc(var(--safe-t) + 4px);
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(20, 12, 6, 0.55);
 }
 #xp-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--accent), var(--mint));
-  box-shadow: 0 0 14px rgba(134, 247, 192, 0.6);
+  background: linear-gradient(90deg, var(--special-deep), var(--special));
   transform-origin: left center;
   transform: scaleX(0);
   transition: transform 0.18s ease-out;
@@ -162,8 +189,6 @@ body {
   border-radius: 999px;
   background: var(--panel);
   border: 1px solid var(--line);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
   font-family: var(--font-display);
   font-size: 13px;
   font-variant-numeric: tabular-nums;
@@ -199,8 +224,6 @@ body {
   border-radius: 50%;
   border: 1px solid var(--line);
   background: var(--panel);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
   color: var(--text);
   cursor: pointer;
   padding: 0;
@@ -221,8 +244,6 @@ body {
   border-radius: 999px;
   background: var(--panel);
   border: 1px solid var(--line);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
   font-weight: 600;
   font-size: 14px;
   white-space: nowrap;
@@ -232,13 +253,16 @@ body {
     opacity 0.25s,
     transform 0.25s;
 }
+#hud:has(#boss-bar:not([hidden])) ~ #toast {
+  top: calc(var(--safe-t) + 98px);
+}
 #toast.show {
   opacity: 1;
   transform: translate(-50%, 0);
 }
 #toast.danger {
   color: var(--danger);
-  border-color: rgba(255, 123, 138, 0.35);
+  border-color: rgba(240, 120, 90, 0.45);
 }
 
 /* ------------------------------------------------------------ Layar umum */
@@ -253,9 +277,7 @@ body {
 .modal {
   align-items: center;
   justify-content: center;
-  background: rgba(8, 9, 18, 0.55);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  background: rgba(12, 7, 4, 0.72);
   animation: fade 0.2s ease-out;
 }
 @keyframes fade {
@@ -289,8 +311,6 @@ body {
   border-radius: var(--radius);
   background: var(--panel);
   border: 1px solid var(--line);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
   display: flex;
   flex-direction: column;
@@ -341,11 +361,11 @@ body {
   font-family: var(--font-display);
   font-size: 15px;
   letter-spacing: 0.04em;
-  box-shadow: 0 8px 32px rgba(143, 243, 255, 0.28);
+  box-shadow: 0 8px 28px rgba(232, 181, 88, 0.28);
 }
 .btn.primary:hover {
-  background: #b5f8ff;
-  box-shadow: 0 8px 40px rgba(143, 243, 255, 0.42);
+  background: var(--accent-bright);
+  box-shadow: 0 8px 36px rgba(232, 181, 88, 0.42);
 }
 .btn.ghost {
   background: transparent;
@@ -395,7 +415,7 @@ button:focus-visible,
   transition: transform 0.18s;
 }
 .toggle input:checked + .track {
-  background: rgba(143, 243, 255, 0.55);
+  background: rgba(232, 181, 88, 0.7);
 }
 .toggle input:checked + .track .thumb {
   transform: translateX(16px);
@@ -404,10 +424,12 @@ button:focus-visible,
 /* ------------------------------------------------------------ Layar mulai */
 .start {
   align-items: flex-end;
-  background: linear-gradient(90deg, rgba(13, 14, 26, 0.92) 0%, rgba(13, 14, 26, 0.7) 38%, rgba(13, 14, 26, 0) 70%);
+  background: linear-gradient(90deg, rgba(20, 13, 8, 0.92) 0%, rgba(20, 13, 8, 0.7) 38%, rgba(20, 13, 8, 0) 70%);
 }
 .start-panel {
-  width: min(440px, 100%);
+  width: min(520px, 100%);
+  /* margin auto, bukan flex-end: kalau layar terlalu pendek, bagian atas tetap bisa digulir */
+  margin-top: auto;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -415,25 +437,41 @@ button:focus-visible,
   padding: 0 0 clamp(8px, 4vh, 48px) clamp(0px, 4vw, 48px);
   animation: rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.brand-crest {
+  flex: none;
+  width: clamp(68px, 19vw, 88px);
+  height: auto;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.5));
+}
+.panel-crest {
+  width: 52px;
+  height: auto;
+  margin-bottom: -6px;
+}
 .logo {
   margin: 0;
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: clamp(54px, 13vw, 92px);
-  line-height: 0.9;
-  letter-spacing: -0.035em;
-  background: linear-gradient(180deg, #ffffff 10%, var(--accent) 95%);
+  font-family: var(--font-heraldic);
+  font-weight: 800;
+  font-size: clamp(38px, 10.5vw, 54px);
+  line-height: 1;
+  letter-spacing: 0.005em;
+  background: linear-gradient(180deg, #fff4d6 10%, var(--accent) 95%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  filter: drop-shadow(0 0 28px rgba(143, 243, 255, 0.35));
+  filter: drop-shadow(0 0 22px rgba(232, 181, 88, 0.35));
 }
 .logo span {
   display: block;
-  margin-top: 10px;
-  font-size: 0.24em;
-  font-weight: 500;
-  letter-spacing: 0.42em;
+  margin-top: 8px;
+  font-size: 0.34em;
+  font-weight: 700;
+  letter-spacing: 0.46em;
   text-transform: uppercase;
   -webkit-text-fill-color: var(--muted);
   color: var(--muted);
@@ -441,7 +479,7 @@ button:focus-visible,
 .lede {
   margin: 0;
   max-width: 36ch;
-  color: #c7cbe6;
+  color: #e0d2b4;
   font-size: 16px;
   line-height: 1.55;
 }
@@ -469,132 +507,433 @@ button:focus-visible,
   line-height: 1.5;
 }
 
-/* ------------------------------------------------------------ Kartu level-up */
+/* ------------------------------------------------------------ Kartu level-up
+   Kartu perkamen di atas meja kayu. Warna pita menandai jenis: merah bata senjata,
+   hijau hutan pasif, emas pusaka. */
 .levelup {
-  width: min(860px, 100%);
+  width: min(960px, 100%);
+  max-height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
 }
+.levelup-eyebrow {
+  margin: 0;
+  color: var(--parchment-deep);
+  font: 700 13px/1.2 var(--font-heraldic);
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+}
+.levelup-title {
+  margin: 4px 0 0;
+  color: #fff4d6;
+  font: 800 clamp(34px, 6vw, 52px) / 1.05 var(--font-heraldic);
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.5);
+}
+.levelup-sub {
+  margin: 6px 0 0;
+  color: #d9ccb0;
+  font-size: 15px;
+}
+.levelup.special .levelup-eyebrow {
+  color: var(--special);
+}
+.levelup.special .levelup-title {
+  color: var(--special);
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.55), 0 0 34px rgba(255, 190, 90, 0.55);
+}
 .cards {
-  margin-top: 22px;
+  margin-top: 20px;
   width: 100%;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
+  gap: 16px;
 }
 .card {
   --i: 0;
+  --band: var(--bronze);
   position: relative;
   appearance: none;
   text-align: left;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px 18px 18px;
-  min-height: 220px;
-  border-radius: var(--radius);
-  border: 1px solid var(--line);
-  background: linear-gradient(180deg, rgba(30, 33, 58, 0.92), rgba(18, 20, 36, 0.92));
-  color: var(--text);
+  gap: 12px;
+  padding: 16px 16px 12px;
+  min-height: 244px;
+  border-radius: 6px;
+  border: 2px solid var(--wood-light);
+  border-top: 7px solid var(--band);
+  background:
+    radial-gradient(120% 70% at 50% 0%, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0) 70%),
+    linear-gradient(180deg, var(--parchment), var(--parchment-deep));
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.5), inset 0 0 26px rgba(120, 84, 40, 0.28);
+  color: var(--ink-brown);
   font: inherit;
   cursor: pointer;
-  animation: card-in 0.34s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-  animation-delay: calc(var(--i) * 60ms);
+  animation: card-in 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--i) * 50ms);
   transition:
-    transform 0.15s,
-    border-color 0.15s,
-    box-shadow 0.15s;
+    transform 0.14s,
+    box-shadow 0.14s,
+    border-color 0.14s;
+}
+.card.tag-senjata {
+  --band: var(--weapon);
+}
+.card.tag-pasif {
+  --band: var(--passive);
+}
+.card.tag-pusaka {
+  --band: var(--special-deep);
+  border-color: var(--special-deep);
+  background:
+    radial-gradient(130% 80% at 50% 0%, rgba(255, 235, 170, 0.28), rgba(255, 235, 170, 0) 72%),
+    linear-gradient(180deg, #3a2413, #1d120a);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6), 0 0 26px rgba(255, 180, 80, 0.3), inset 0 0 0 1px rgba(255, 207, 107, 0.45);
+  color: #f7e8c6;
 }
 @keyframes card-in {
   from {
-    transform: translateY(18px);
+    transform: translateY(16px);
     opacity: 0;
   }
 }
 .card:hover,
 .card:focus-visible {
-  transform: translateY(-4px);
-  border-color: rgba(143, 243, 255, 0.55);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(143, 243, 255, 0.25), 0 0 40px rgba(143, 243, 255, 0.15);
+  transform: translateY(-5px);
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.55), 0 0 0 2px var(--band), inset 0 0 26px rgba(120, 84, 40, 0.2);
   outline: none;
+}
+.card.tag-pusaka:hover,
+.card.tag-pusaka:focus-visible {
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.6), 0 0 0 2px var(--special), 0 0 44px rgba(255, 190, 90, 0.5);
 }
 .card:active {
   transform: scale(0.98);
 }
-.card-icon {
-  width: 52px;
-  height: 52px;
-  display: grid;
-  place-items: center;
-  border-radius: 15px;
-  color: var(--accent);
-  background: rgba(143, 243, 255, 0.1);
-  border: 1px solid rgba(143, 243, 255, 0.22);
-}
-.card-icon svg {
-  width: 26px;
-  height: 26px;
-}
-.card-body {
+.card-head {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  align-items: center;
+  gap: 12px;
   min-width: 0;
 }
-.card-top {
+.card-crest {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 2px solid var(--bronze);
+  color: var(--band);
+  background: radial-gradient(circle at 35% 30%, #fff5d8, #d9c08a);
+  box-shadow: inset 0 -3px 5px rgba(90, 60, 25, 0.35), 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+.tag-pusaka .card-crest {
+  border-color: var(--special);
+  color: var(--special);
+  background: radial-gradient(circle at 35% 30%, #6b4120, #24150b);
+  box-shadow: 0 0 16px rgba(255, 190, 90, 0.5), inset 0 0 10px rgba(255, 190, 90, 0.25);
+}
+.card-crest svg {
+  width: 32px;
+  height: 32px;
+}
+.card-title {
+  min-width: 0;
+}
+.card-tag {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--band);
+}
+.tag-pusaka .card-tag {
+  color: var(--special);
+}
+.card-new {
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--band);
+  color: #fff6df;
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+}
+.tag-pusaka .card-new {
+  color: #2a1a0c;
+  background: var(--special);
+}
+.card-name {
+  margin-top: 2px;
+  font: 700 18px/1.14 var(--font-heraldic);
+}
+.card-desc {
+  flex: 1;
+  color: var(--ink-brown-soft);
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.42;
+}
+.tag-pusaka .card-desc {
+  color: #dcc9a4;
+}
+.card-stats {
+  margin: 0;
+  padding: 7px 0 0;
+  list-style: none;
+  border-top: 1px dashed rgba(70, 45, 20, 0.4);
+  display: grid;
+  gap: 3px;
+  font-size: 12.5px;
+}
+.tag-pusaka .card-stats {
+  border-top-color: rgba(255, 207, 107, 0.35);
+}
+.card-stats li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.card-stats span {
+  color: var(--ink-brown-soft);
+  font-weight: 600;
+}
+.tag-pusaka .card-stats span {
+  color: #cdb78e;
+}
+.card-stats b {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  color: var(--band);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.tag-pusaka .card-stats b {
+  color: var(--special);
+}
+.card-stats s {
+  color: var(--ink-brown-soft);
+  font-weight: 600;
+  text-decoration: none;
+  opacity: 0.75;
+}
+.tag-pusaka .card-stats s {
+  color: #cdb78e;
+}
+.card-stats em {
+  font-style: normal;
+  opacity: 0.7;
+}
+.card-foot {
+  min-height: 22px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
 }
-.card-tag {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
 .pips {
   display: flex;
-  gap: 4px;
+  gap: 5px;
 }
 .pips i {
-  width: 14px;
-  height: 4px;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.14);
+  width: 10px;
+  height: 10px;
+  transform: rotate(45deg);
+  border: 1.5px solid var(--bronze);
+  background: rgba(70, 45, 20, 0.14);
 }
 .pips i.on {
-  background: var(--gold);
+  background: var(--bronze);
 }
-.card-name {
-  font-family: var(--font-display);
-  font-size: 18px;
-  font-weight: 600;
-  line-height: 1.2;
+.pips i.next {
+  background: var(--band);
+  border-color: var(--band);
+  box-shadow: 0 0 6px var(--band);
+  animation: pip-next 0.9s ease-in-out infinite alternate;
 }
-.card-desc {
-  color: #c2c6e2;
-  font-size: 14px;
-  line-height: 1.45;
+.tag-pusaka .pips i {
+  border-color: var(--special-deep);
+}
+.tag-pusaka .pips i.on {
+  background: var(--special-deep);
+}
+.tag-pusaka .pips i.next {
+  background: var(--special);
+  border-color: var(--special);
+  box-shadow: 0 0 8px var(--special);
+}
+@keyframes pip-next {
+  to {
+    opacity: 0.45;
+  }
 }
 .card-key {
+  min-width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  border: 1px solid rgba(70, 45, 20, 0.45);
+  color: var(--ink-brown-soft);
+  font: 700 12px/1 var(--font-heraldic);
+}
+.tag-pusaka .card-key {
+  border-color: rgba(255, 207, 107, 0.45);
+  color: var(--special);
+}
+.loadout {
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+.gear {
+  --band: var(--bronze);
+  position: relative;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1.5px solid var(--bronze);
+  background: rgba(24, 15, 9, 0.82);
+  color: #e2cfa6;
+}
+.gear.tag-senjata {
+  color: #eb9c7f;
+}
+.gear.tag-pasif {
+  color: #9fd2a5;
+}
+.gear.tag-pusaka {
+  border-color: var(--special);
+  color: var(--special);
+}
+.gear svg {
+  width: 19px;
+  height: 19px;
+}
+.gear b {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  min-width: 24px;
-  height: 24px;
+  right: -3px;
+  bottom: -3px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 2px;
   display: grid;
   place-items: center;
   border-radius: 7px;
-  border: 1px solid var(--line);
-  color: var(--muted);
-  font: 600 12px/1 var(--font-display);
+  background: var(--wood-light);
+  color: #fff4d6;
+  font: 700 9px/1 var(--font-body);
+}
+
+/* ------------------------------------------------------------ Bar bos dan slot pusaka */
+.boss-bar {
+  width: min(520px, 76vw);
+  margin: 10px auto 0;
+  text-align: center;
+}
+.boss-name {
+  color: #fff4d6;
+  font: 700 14px/1.2 var(--font-heraldic);
+  letter-spacing: 0.08em;
+  text-shadow: 0 1px 3px #000;
+}
+.boss-track {
+  margin-top: 4px;
+  height: 10px;
+  border-radius: 3px;
+  border: 1.5px solid var(--bronze);
+  background: rgba(20, 10, 8, 0.8);
+  overflow: hidden;
+}
+#boss-fill {
+  height: 100%;
+  background: linear-gradient(180deg, #e0553e, #8d2418);
+  transform-origin: left;
+  transition: transform 0.12s;
+}
+.specials {
+  position: absolute;
+  top: calc(var(--safe-t) + 62px);
+  left: calc(var(--safe-l) + 12px);
+  /* Sepuluh pusaka bisa dimiliki sekaligus: mengisi dua kolom kalau layar pendek */
+  max-height: calc(100vh - var(--safe-t) - 80px);
+  display: flex;
+  flex-flow: column wrap;
+  align-content: flex-start;
+  gap: 7px;
+}
+.special-slot {
+  --ready: 0;
+  position: relative;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--special);
+  background:
+    radial-gradient(closest-side, #24150b 82%, transparent 84%),
+    conic-gradient(var(--special) calc(var(--ready) * 360deg), rgba(70, 45, 20, 0.85) 0);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+.special-slot.ready {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5), 0 0 14px rgba(255, 190, 90, 0.6);
+}
+.special-slot svg {
+  width: 22px;
+  height: 22px;
+}
+.special-slot b {
+  position: absolute;
+  right: -3px;
+  bottom: -2px;
+  padding: 1px 3px;
+  border-radius: 3px;
+  background: var(--special-deep);
+  color: #fff4d6;
+  font: 700 9px/1 var(--font-heraldic);
+}
+
+.card.rarity-rare {
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.5), inset 0 0 26px rgba(120, 84, 40, 0.28), 0 0 0 2px var(--rare);
+}
+.card.rarity-epic:not(.tag-pusaka) {
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.5), inset 0 0 26px rgba(120, 84, 40, 0.28), 0 0 0 2px var(--epic), 0 0 22px rgba(201, 66, 48, 0.55);
+}
+.card-rarity {
+  padding: 1px 6px;
+  border-radius: 3px;
+  color: #fff6df;
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  background: var(--rare-deep);
+}
+.rarity-epic .card-rarity {
+  background: var(--epic);
 }
 
 /* ------------------------------------------------------------ Akhir ronde */
+.end-redirect {
+  margin: -6px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+.end-redirect b {
+  color: var(--gold);
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+}
 .record {
   align-self: flex-start;
   margin: -8px 0 0;
@@ -645,7 +984,7 @@ button:focus-visible,
 /* ------------------------------------------------------------ Layar HP */
 @media (max-width: 720px) {
   .start {
-    background: linear-gradient(0deg, rgba(13, 14, 26, 0.95) 0%, rgba(13, 14, 26, 0.8) 45%, rgba(13, 14, 26, 0) 80%);
+    background: linear-gradient(0deg, rgba(20, 13, 8, 0.95) 0%, rgba(20, 13, 8, 0.8) 45%, rgba(20, 13, 8, 0) 80%);
   }
   .start-panel {
     padding: 0 4px 8px;
@@ -656,34 +995,101 @@ button:focus-visible,
   .start .btn.primary {
     width: 100%;
   }
+  .levelup-title {
+    font-size: 30px;
+  }
+  .levelup-sub {
+    font-size: 13px;
+  }
   .cards {
     grid-template-columns: 1fr;
-    gap: 10px;
-    margin-top: 16px;
+    gap: 9px;
+    margin-top: 12px;
   }
   .card {
     min-height: 0;
-    flex-direction: row;
-    align-items: center;
-    padding: 14px 14px;
-    gap: 14px;
+    padding: 10px 12px 9px;
+    gap: 6px;
+    border-top-width: 2px;
+    border-left: 6px solid var(--band);
   }
-  .card-icon {
-    flex: none;
-    width: 46px;
-    height: 46px;
+  .card-crest {
+    width: 42px;
+    height: 42px;
   }
-  .card-body {
-    flex: 1;
+  .card-crest svg {
+    width: 24px;
+    height: 24px;
   }
   .card-name {
-    font-size: 16px;
+    font-size: 15.5px;
   }
   .card-desc {
-    font-size: 13px;
+    font-size: 12.5px;
+    line-height: 1.32;
+  }
+  .card-stats {
+    padding-top: 5px;
+    font-size: 12px;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 14px;
+  }
+  .card-foot {
+    position: absolute;
+    top: 9px;
+    right: 10px;
+    min-height: 0;
+  }
+  .pips {
+    gap: 3px;
+  }
+  .pips i {
+    width: 7px;
+    height: 7px;
   }
   .card-key {
     display: none;
+  }
+  .loadout {
+    margin-top: 10px;
+  }
+  .gear {
+    width: 28px;
+    height: 28px;
+  }
+  .gear svg {
+    width: 16px;
+    height: 16px;
+  }
+  .specials {
+    top: calc(var(--safe-t) + 54px);
+    left: calc(var(--safe-l) + 8px);
+  }
+  .special-slot {
+    width: 36px;
+    height: 36px;
+  }
+  .special-slot svg {
+    width: 19px;
+    height: 19px;
+  }
+}
+/* HP mode lanskap: hanya yang penting, supaya logo dan tombol muat tanpa digulir */
+@media (max-height: 480px) {
+  .start-panel {
+    gap: 10px;
+    padding-bottom: 0;
+  }
+  .start .eyebrow,
+  .lede,
+  .hint {
+    display: none;
+  }
+  .brand-crest {
+    width: 68px;
+  }
+  .start .btn.primary {
+    height: 48px;
   }
 }
 @media (pointer: coarse) {
