@@ -1,6 +1,6 @@
-# Lumen Survivor
+# Ravenhold Survivor
 
-Prototipe game survival ala Survivor.io: bertahan 10 menit melawan gerombolan musuh,
+Prototipe game survival ala Survivor.io: bertahan 15 menit melawan gerombolan musuh,
 kumpulkan kristal XP, lalu pilih kekuatan baru setiap naik level.
 Jalan di browser desktop dan mobile.
 
@@ -27,12 +27,22 @@ Saat naik level, pilih kartu dengan klik/sentuh, atau tombol 1–3.
 
 ## Isi prototipe
 
-- 4 jenis musuh: segitiga cepat, kotak, heksagon tebal, dan bos bintang (menit 5 dan 9).
-- Gelombang besar setiap 60 detik.
-- 3 senjata: peluru otomatis, satelit yang mengorbit, gelombang nova.
-- 10 upgrade (5 senjata, 5 pasif), masing-masing bertingkat.
+- 5 jenis musuh: Goblin Semak, Prajurit Tulang, Ogre Batu, serta bos Ksatria Terkutuk (menit 5) dan Naga Bara (menit 9,5).
+- Jumlah dan kekuatan musuh mengikuti level pemain, dengan gelombang besar setiap 60 detik.
+- 3 senjata: panah otomatis, pedang penjaga yang mengorbit, lingkar rune.
+- 10 senjata pusaka, ditawarkan acak setiap level kelipatan 5, masing-masing tiga tingkat.
+- 29 upgrade bertingkat (senjata dan perlengkapan) dengan kelangkaan Biasa, Langka, dan Epik.
+- Level maksimum 50, kira-kira dicapai setelah 15 menit. Saat waktu habis, game kembali ke menu utama.
 - Rekor tersimpan di browser (localStorage).
 - Efek bloom yang mati otomatis kalau HP tidak kuat (bisa diatur manual).
+
+## Test
+
+```bash
+npm test           # unit test logika (cepat, tanpa browser)
+npm run test:e2e   # game sungguhan di Google Chrome: shader, lampu, alur main
+npm run test:all   # keduanya
+```
 
 ## Build & hosting
 
