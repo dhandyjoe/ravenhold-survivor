@@ -421,6 +421,61 @@ button:focus-visible,
   transform: translateX(16px);
 }
 
+/* ------------------------------------------------------------ Penggeser volume */
+.volumes {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  width: min(260px, 100%);
+}
+.slider {
+  display: grid;
+  grid-template-columns: 82px 1fr;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.slider input {
+  appearance: none;
+  height: 22px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  --fill: 60%;
+}
+.slider input::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(232, 181, 88, 0.75) var(--fill), rgba(255, 255, 255, 0.12) var(--fill));
+}
+.slider input::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(232, 181, 88, 0.75) var(--fill), rgba(255, 255, 255, 0.12) var(--fill));
+}
+.slider input::-webkit-slider-thumb {
+  appearance: none;
+  margin-top: -5px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--text);
+}
+.slider input::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--text);
+}
+.slider input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
 /* ------------------------------------------------------------ Layar mulai */
 .start {
   align-items: flex-end;
@@ -505,6 +560,18 @@ button:focus-visible,
   color: var(--muted);
   font-size: 13px;
   line-height: 1.5;
+}
+
+.credits {
+  margin: 0;
+  max-width: 44ch;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+  opacity: 0.75;
+}
+.credits a {
+  color: inherit;
 }
 
 /* ------------------------------------------------------------ Kartu level-up

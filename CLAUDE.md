@@ -22,6 +22,9 @@ Bahasa UI dan komentar kode: Bahasa Indonesia.
 - `src/ui.ts` + `index.html` + `src/style.css` — semua UI adalah HTML/CSS di atas canvas.
 - `src/art/logo.svg` — lambang game. `src/art/favicon.svg` — versi sederhana untuk tab browser. PNG di sebelahnya dibuat dari SVG yang sama.
 - `src/input.ts` — keyboard + joystick sentuh (DOM, bukan input Phaser).
+- `src/audio.ts` — mesin suara (`GameAudio`) di atas `scene.sound`: pool, batas suara, crossfade musik, ducking.
+  `src/audioMix.ts` — logika murni (pilih trek, pan, jarak, pembatas laju). `src/audioCatalog.ts` — **daftar semua ID suara** dan takarannya.
+  `src/audio/files/` — file mp3/m4a (`<id>.m4a` atau `<id>_<n>.mp3`), kredit di `CREDITS.md`. `src/soundtest.ts` — panel uji dengar (`?debug&soundtest`).
 - `src/spatial.ts` — spatial hash untuk cek tabrakan cepat.
 
 ## Aturan teknis
@@ -36,6 +39,15 @@ Bahasa UI dan komentar kode: Bahasa Indonesia.
 - Semua timer gameplay memakai `this.clock` (berhenti saat jeda), bukan `Date.now()`.
 - Gerakan selalu dikali `dt` (detik), dan `dt` dibatasi maks 50 ms.
 - Jumlah dan kekuatan musuh mengikuti level efektif (`src/balance.ts`), jangan hanya waktu.
+- Audio: suara baru ditambah dulu di `CATALOG` (`audioCatalog.ts`) lalu dipicu lewat `audio.sfx/ui/stinger/loop`. Tipe `SoundId` menjaga salah ketik.
+  `sfx` dan `loop` hanya berbunyi saat state `playing` (demo di menu ikut menjalankan `step()`, jadi jangan lewati penjaga ini);
+  suara antarmuka dan stinger memakai `ui`/`stinger`. File yang belum ada berarti senyap, bukan error. Angka umum ada di `AUDIO` (`config.ts`).
+- Efek suara: `scripts/sfx-tool.mjs` (tanpa ffmpeg: decode lewat Chrome, setarakan keras, AAC lewat `afconvert`) membangun file dari `scripts/sfx-manifest.json`.
+  Ganti pilihan file di manifes lalu bangun ulang; kredit tiap file otomatis ada di `CREDITS.md`. Getter `volume`/`mute` Phaser tertinggal satu langkah, baca `currentConfig`.
+- Musik hanya dari karya manusia dengan lisensi tertulis, tercatat di `CREDITS.md`. Musik CC BY wajib dikreditkan di README dan layar mulai.
+  Trek bukan loop: `GameAudio` menyambungkannya sendiri dengan crossfade, dan kerasnya disetarakan lewat `vol` di katalog. Jangan memakai musik atau suara hasil generator AI.
+- File musik di-decode jadi puluhan MB: hanya trek aktif dan berikutnya yang boleh ada di memori (lihat `tracksNeeded`).
+- `scene.sound.mute` Phaser dibaca dari gain node dan tertinggal satu langkah; pakai `audio.muted`.
 - Efek yang melukai atau bergerak dijalankan dengan `dt` dari loop utama (`FxPool`, `SpecialWeapons`), bukan tween, supaya ikut berhenti saat jeda.
 
 ## Aturan visual (gaya "modern, simple")
@@ -54,5 +66,6 @@ Bahasa UI dan komentar kode: Bahasa Indonesia.
 - `npm run test:e2e` — game sungguhan di Chrome: shader, lampu, dan alur main. Wajib lolos untuk perubahan visual.
 - `npm run build` — build untuk hosting di `dist/`.
 - `npm run build:single` — satu file HTML di `dist-single/`.
+- Buka `?debug&soundtest` untuk panel uji dengar: daftar suara, mana yang filenya ada, dan tombol "sambungan" untuk memeriksa loop musik.
 - Buka `?debug` untuk mengakses `window.__game` dari console.
   Contoh: `__game.scene.getScene('game').runTime = 290` untuk loncat ke menit ke-5.
