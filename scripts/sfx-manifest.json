@@ -1,0 +1,589 @@
+[
+ {
+  "id": "bow_shot_1",
+  "cat": "weapon",
+  "src": "z_rpg80/blade_01.ogg",
+  "rate": 1.3,
+  "max": 0.3
+ },
+ {
+  "id": "bow_shot_2",
+  "cat": "weapon",
+  "src": "z_sfx100v2/sfx100v2_air_03.ogg",
+  "rate": 1.15
+ },
+ {
+  "id": "bow_shot_3",
+  "cat": "weapon",
+  "src": "z_rpg80/blade_02.ogg",
+  "rate": 1.35,
+  "max": 0.3
+ },
+ {
+  "id": "bow_multi_1",
+  "cat": "weapon",
+  "src": "z_rpg80/blade_03.ogg",
+  "rate": 1.15,
+  "max": 0.4
+ },
+ {
+  "id": "bow_multi_2",
+  "cat": "weapon",
+  "src": "z_sfx100v2/sfx100v2_air_02.ogg",
+  "rate": 1.5,
+  "max": 0.5
+ },
+ {
+  "id": "hit_flesh_1",
+  "cat": "weapon",
+  "src": "z_kenneyrpg/OGG/chop.ogg",
+  "rate": 1.1
+ },
+ {
+  "id": "hit_flesh_2",
+  "cat": "weapon",
+  "src": "z_kenneyrpg/OGG/knifeSlice2.ogg",
+  "max": 0.25
+ },
+ {
+  "id": "hit_flesh_3",
+  "cat": "weapon",
+  "src": "z_sfx100v2/sfx100v2_hit_01.ogg",
+  "max": 0.3
+ },
+ {
+  "id": "hit_bone_1",
+  "cat": "weapon",
+  "src": "z_metalwood/wood_hit_01.ogg",
+  "max": 0.3
+ },
+ {
+  "id": "hit_bone_2",
+  "cat": "weapon",
+  "src": "z_metalwood/wood_hit_03.ogg",
+  "max": 0.3
+ },
+ {
+  "id": "hit_bone_3",
+  "cat": "weapon",
+  "src": "z_rpg80/wood_03.ogg",
+  "max": 0.3
+ },
+ {
+  "id": "hit_stone_1",
+  "cat": "weapon",
+  "src": "z_rpg80/stones_04.ogg",
+  "max": 0.4
+ },
+ {
+  "id": "hit_stone_2",
+  "cat": "weapon",
+  "src": "z_rpg80/item_stone_03.ogg",
+  "max": 0.4
+ },
+ {
+  "id": "hit_armor_1",
+  "cat": "weapon",
+  "src": "z_metalwood/metal_hit_01.ogg",
+  "max": 0.4
+ },
+ {
+  "id": "hit_armor_2",
+  "cat": "weapon",
+  "src": "z_metalwood/metal_hit_03.ogg",
+  "max": 0.4
+ },
+ {
+  "id": "hit_armor_3",
+  "cat": "weapon",
+  "src": "z_rpg80/metal_02.ogg",
+  "max": 0.4
+ },
+ {
+  "id": "hit_scale_1",
+  "cat": "weapon",
+  "src": "z_sfx100v2/sfx100v2_hit_02.ogg",
+  "rate": 0.85,
+  "max": 0.4
+ },
+ {
+  "id": "hit_scale_2",
+  "cat": "weapon",
+  "src": "z_metalwood/metal_hit_04.ogg",
+  "rate": 0.8,
+  "max": 0.4
+ },
+ {
+  "id": "hit_crit_1",
+  "cat": "weapon",
+  "src": "z_metalwood/metal_hit_05.ogg",
+  "rate": 1.2,
+  "max": 0.35
+ },
+ {
+  "id": "hit_crit_2",
+  "cat": "weapon",
+  "src": "z_sfx100v2/sfx100v2_glass_04.ogg",
+  "rate": 1.1
+ },
+ {
+  "id": "hit_execute",
+  "cat": "weapon",
+  "src": "z_kenneyrpg/OGG/chop.ogg",
+  "rate": 0.7,
+  "gain": 2
+ },
+ {
+  "id": "arrow_poison",
+  "cat": "weapon",
+  "src": "z_rpg80/creature_slime_01.ogg",
+  "max": 0.5
+ },
+ {
+  "id": "arrow_frost_1",
+  "cat": "weapon",
+  "src": "z_sfx100v2/sfx100v2_glass_01.ogg",
+  "rate": 1.25,
+  "max": 0.3
+ },
+ {
+  "id": "arrow_frost_2",
+  "cat": "weapon",
+  "src": "z_sfx100v2/sfx100v2_glass_06.ogg",
+  "rate": 1.2,
+  "max": 0.3
+ },
+ {
+  "id": "arrow_explode_1",
+  "cat": "weapon",
+  "src": "z_bang25/bang_02.ogg",
+  "max": 0.6
+ },
+ {
+  "id": "arrow_explode_2",
+  "cat": "weapon",
+  "src": "z_bang25/bang_08.ogg",
+  "max": 0.6
+ },
+ {
+  "id": "arrow_explode_3",
+  "cat": "weapon",
+  "src": "z_bang25/bang_05.ogg",
+  "max": 0.6
+ },
+ {
+  "id": "arrow_bounce_1",
+  "cat": "weapon",
+  "src": "z_sfx100v2/sfx100v2_metal_hit_02.ogg",
+  "rate": 1.3
+ },
+ {
+  "id": "arrow_bounce_2",
+  "cat": "weapon",
+  "src": "z_rpg80/metal_01.ogg",
+  "rate": 1.25,
+  "max": 0.3
+ },
+ {
+  "id": "sword_hit_1",
+  "cat": "weapon",
+  "src": "z_rpg80/metal_02.ogg",
+  "max": 0.35
+ },
+ {
+  "id": "sword_hit_2",
+  "cat": "weapon",
+  "src": "z_rpg80/metal_03.ogg",
+  "max": 0.35
+ },
+ {
+  "id": "sword_hit_3",
+  "cat": "weapon",
+  "src": "z_rpg80/blade_03.ogg",
+  "rate": 0.9,
+  "max": 0.35
+ },
+ {
+  "id": "nova_cast_1",
+  "cat": "weapon",
+  "src": "z_rpg80/spell_01.ogg"
+ },
+ {
+  "id": "nova_cast_2",
+  "cat": "weapon",
+  "src": "z_rpg80/spell_02.ogg"
+ },
+ {
+  "id": "meteor_fall",
+  "cat": "special",
+  "src": "z_sfx100v2/sfx100v2_air_02.ogg",
+  "rate": 0.85,
+  "max": 0.7
+ },
+ {
+  "id": "meteor_impact_1",
+  "cat": "special",
+  "src": "z_bang25/bang_06.ogg",
+  "gain": 3
+ },
+ {
+  "id": "meteor_impact_2",
+  "cat": "special",
+  "src": "z_bang25/cannon_02.ogg",
+  "gain": 3
+ },
+ {
+  "id": "meteor_burn",
+  "cat": "special",
+  "src": "z_fire/fire.wav",
+  "start": 6,
+  "max": 3,
+  "gain": 2
+ },
+ {
+  "id": "rain_release",
+  "cat": "special",
+  "src": "z_sfx100v2/sfx100v2_air_01.ogg",
+  "max": 1.6
+ },
+ {
+  "id": "rain_loop",
+  "cat": "special",
+  "src": "z_sfx100v2/sfx100v2_air_01.ogg",
+  "start": 0.3,
+  "max": 2.2,
+  "rate": 1.15
+ },
+ {
+  "id": "rain_thud_1",
+  "cat": "special",
+  "src": "z_metalwood/wood_hit_04.ogg",
+  "max": 0.25
+ },
+ {
+  "id": "rain_thud_2",
+  "cat": "special",
+  "src": "z_metalwood/wood_hit_05.ogg",
+  "max": 0.25
+ },
+ {
+  "id": "rain_thud_3",
+  "cat": "special",
+  "src": "z_rpg80/item_wood_02.ogg",
+  "max": 0.25
+ },
+ {
+  "id": "thunder_crack_1",
+  "cat": "special",
+  "src": "z_bang25/bang_03.ogg",
+  "max": 0.9,
+  "rate": 0.9
+ },
+ {
+  "id": "thunder_crack_2",
+  "cat": "special",
+  "src": "z_bang25/bang_07.ogg",
+  "max": 0.9,
+  "rate": 0.9
+ },
+ {
+  "id": "thunder_crack_3",
+  "cat": "special",
+  "src": "z_bang25/bang_09.ogg",
+  "max": 0.9,
+  "rate": 0.9
+ },
+ {
+  "id": "thunder_crack_4",
+  "cat": "special",
+  "src": "z_sfx100v2/sfx100v2_thunder_01.ogg",
+  "max": 1
+ },
+ {
+  "id": "thunder_rumble",
+  "cat": "special",
+  "src": "z_sfx100v2/sfx100v2_thunder_01.ogg"
+ },
+ {
+  "id": "moon_slash_1",
+  "cat": "special",
+  "src": "z_rpg80/blade_01.ogg",
+  "rate": 0.75,
+  "gain": 2
+ },
+ {
+  "id": "moon_slash_2",
+  "cat": "special",
+  "src": "z_rpg80/blade_02.ogg",
+  "rate": 0.75,
+  "gain": 2
+ },
+ {
+  "id": "raven_peck_1",
+  "cat": "special",
+  "src": "z_rpg80/wood_01.ogg",
+  "max": 0.2
+ },
+ {
+  "id": "raven_peck_2",
+  "cat": "special",
+  "src": "z_rpg80/wood_02.ogg",
+  "max": 0.2
+ },
+ {
+  "id": "tornado_start",
+  "cat": "special",
+  "src": "z_sfx100v2/sfx100v2_air_02.ogg",
+  "rate": 0.8
+ },
+ {
+  "id": "tornado_loop",
+  "cat": "special",
+  "src": "z_sfx100v2/sfx100v2_air_01.ogg",
+  "rate": 0.9
+ },
+ {
+  "id": "flames_ignite",
+  "cat": "special",
+  "src": "z_rpg80/spell_fire_06.ogg",
+  "gain": 3
+ },
+ {
+  "id": "flames_loop",
+  "cat": "special",
+  "src": "z_fire/fire.wav",
+  "start": 14,
+  "max": 3,
+  "gain": 2
+ },
+ {
+  "id": "holy_pulse_1",
+  "cat": "special",
+  "src": "z_cure/Cure1.wav"
+ },
+ {
+  "id": "holy_pulse_2",
+  "cat": "special",
+  "src": "z_cure/Cure3.wav"
+ },
+ {
+  "id": "frost_cast",
+  "cat": "special",
+  "src": "z_magic/magical_1_0.ogg"
+ },
+ {
+  "id": "frost_shatter_1",
+  "cat": "special",
+  "src": "z_sfx100v2/sfx100v2_glass_02.ogg",
+  "max": 0.6
+ },
+ {
+  "id": "frost_shatter_2",
+  "cat": "special",
+  "src": "z_sfx100v2/sfx100v2_glass_03.ogg",
+  "max": 0.6
+ },
+ {
+  "id": "quake_start",
+  "cat": "special",
+  "src": "z_rpg80/stones_03.ogg",
+  "rate": 0.7,
+  "gain": 3
+ },
+ {
+  "id": "quake_rock_1",
+  "cat": "special",
+  "src": "z_rpg80/stones_01.ogg",
+  "max": 0.5
+ },
+ {
+  "id": "quake_rock_2",
+  "cat": "special",
+  "src": "z_rpg80/stones_02.ogg",
+  "max": 0.5
+ },
+ {
+  "id": "quake_rock_3",
+  "cat": "special",
+  "src": "z_rpg80/stones_04.ogg",
+  "max": 0.5
+ },
+ {
+  "id": "die_goblin_1",
+  "cat": "enemy",
+  "src": "z_rpg80/creature_slime_01.ogg",
+  "max": 0.4
+ },
+ {
+  "id": "die_goblin_2",
+  "cat": "enemy",
+  "src": "z_rpg80/creature_slime_03.ogg",
+  "max": 0.4
+ },
+ {
+  "id": "die_goblin_3",
+  "cat": "enemy",
+  "src": "z_rpg80/creature_slime_04.ogg",
+  "max": 0.4
+ },
+ {
+  "id": "die_bone_1",
+  "cat": "enemy",
+  "src": "z_metalwood/wood_falling_02.ogg",
+  "max": 0.6
+ },
+ {
+  "id": "die_bone_2",
+  "cat": "enemy",
+  "src": "z_metalwood/wood_falling_03.ogg",
+  "max": 0.6
+ },
+ {
+  "id": "die_bone_3",
+  "cat": "enemy",
+  "src": "z_metalwood/wood_falling_05.ogg",
+  "max": 0.6
+ },
+ {
+  "id": "die_ogre_1",
+  "cat": "enemy",
+  "src": "z_creature80/troll_01.ogg",
+  "max": 0.9
+ },
+ {
+  "id": "die_ogre_2",
+  "cat": "enemy",
+  "src": "z_creature80/troll_02.ogg",
+  "max": 0.9
+ },
+ {
+  "id": "die_knight",
+  "cat": "enemy",
+  "src": "z_metalwood/metal_falling_02.ogg",
+  "gain": 3
+ },
+ {
+  "id": "die_dragon",
+  "cat": "enemy",
+  "src": "z_rpg80/creature_roar_02.ogg",
+  "rate": 0.85,
+  "gain": 3
+ },
+ {
+  "id": "hero_hurt_1",
+  "cat": "hero",
+  "src": "z_yell/yelling sounds/3grunt1.wav",
+  "max": 0.5
+ },
+ {
+  "id": "hero_hurt_2",
+  "cat": "hero",
+  "src": "z_yell/yelling sounds/3grunt3.wav"
+ },
+ {
+  "id": "hero_hurt_3",
+  "cat": "hero",
+  "src": "z_yell/yelling sounds/3grunt4.wav"
+ },
+ {
+  "id": "hero_hurt_4",
+  "cat": "hero",
+  "src": "z_yell/yelling sounds/3grunt5.wav"
+ },
+ {
+  "id": "hero_dodge_1",
+  "cat": "hero",
+  "src": "z_kenneyrpg/OGG/cloth1.ogg",
+  "max": 0.35
+ },
+ {
+  "id": "hero_dodge_2",
+  "cat": "hero",
+  "src": "z_kenneyrpg/OGG/cloth2.ogg",
+  "max": 0.35
+ },
+ {
+  "id": "hero_death",
+  "cat": "hero",
+  "src": "z_deaths/exewinDeathSoundsPack/6.ogg",
+  "gain": 2
+ },
+ {
+  "id": "hero_gasp",
+  "cat": "hero",
+  "src": "z_deaths/exewinDeathSoundsPack/3.ogg",
+  "gain": 2
+ },
+ {
+  "id": "revive_phoenix",
+  "cat": "hero",
+  "src": "z_rpg80/spell_fire_03.ogg",
+  "gain": 3
+ },
+ {
+  "id": "hero_power_1",
+  "cat": "hero",
+  "src": "z_yell/yelling sounds/3yell12.wav",
+  "max": 0.8
+ },
+ {
+  "id": "hero_power_2",
+  "cat": "hero",
+  "src": "z_yell/yelling sounds/3yell15.wav",
+  "max": 0.8
+ },
+ {
+  "id": "hero_win",
+  "cat": "hero",
+  "src": "z_yell/yelling sounds/3yell3.wav",
+  "max": 0.9
+ },
+ {
+  "id": "foot_grass_1",
+  "cat": "hero",
+  "src": "z_kenneyrpg/OGG/footstep04.ogg"
+ },
+ {
+  "id": "foot_grass_2",
+  "cat": "hero",
+  "src": "z_kenneyrpg/OGG/footstep05.ogg"
+ },
+ {
+  "id": "foot_grass_3",
+  "cat": "hero",
+  "src": "z_kenneyrpg/OGG/footstep06.ogg"
+ },
+ {
+  "id": "foot_grass_4",
+  "cat": "hero",
+  "src": "z_kenneyrpg/OGG/footstep09.ogg"
+ },
+ {
+  "id": "gem_small",
+  "cat": "pickup",
+  "src": "z_rpg80/item_coins_01.ogg",
+  "max": 0.25
+ },
+ {
+  "id": "gem_big",
+  "cat": "pickup",
+  "src": "z_rpg80/item_coins_03.ogg",
+  "max": 0.4
+ },
+ {
+  "id": "card_pick",
+  "cat": "ui",
+  "src": "z_kenneyrpg/OGG/metalLatch.ogg"
+ },
+ {
+  "id": "card_pick_rare",
+  "cat": "ui",
+  "src": "z_rpg80/item_gem_03.ogg"
+ },
+ {
+  "id": "card_pick_special",
+  "cat": "ui",
+  "src": "z_rpg80/spell_01.ogg",
+  "gain": 2
+ }
+]

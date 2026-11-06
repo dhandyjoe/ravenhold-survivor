@@ -36,6 +36,22 @@ Saat naik level, pilih kartu dengan klik/sentuh, atau tombol 1–3.
 - Rekor tersimpan di browser (localStorage).
 - Efek bloom yang mati otomatis kalau HP tidak kuat (bisa diatur manual).
 
+## Kredit musik
+
+Musik oleh Kevin MacLeod (incompetech.com), Licensed under Creative Commons: By Attribution 4.0 License
+(http://creativecommons.org/licenses/by/4.0/):
+
+| Dipakai untuk | Trek |
+|---|---|
+| Menu utama | "Angevin" |
+| Pagi | "Village Consort" |
+| Senja | "Lord of the Land" |
+| Malam | "Heavy Heart" |
+| Bos: Ksatria Terkutuk | "Unholy Knight" |
+| Bos: Naga Bara | "Death and Axes" |
+
+Rincian lisensi semua file audio ada di `src/audio/files/CREDITS.md`.
+
 ## Test
 
 ```bash

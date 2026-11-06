@@ -64,11 +64,16 @@
           <button id="btn-start" class="btn primary" type="button">Mulai</button>
           <p id="best" class="best" hidden></p>
           <p id="controls-hint" class="hint"></p>
+          <p class="credits">Musik: Kevin MacLeod (incompetech.com), lisensi <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>. Lihat README untuk judul trek.</p>
           <label class="toggle">
             <input id="opt-glow" type="checkbox" checked />
             <span class="track"><span class="thumb"></span></span>
             <span>Efek cahaya</span>
           </label>
+          <div class="volumes">
+            <label class="slider"><span>Musik</span><input id="opt-music" type="range" min="0" max="100" step="5" /></label>
+            <label class="slider"><span>Efek suara</span><input id="opt-sfx" type="range" min="0" max="100" step="5" /></label>
+          </div>
         </div>
       </section>
 
@@ -99,6 +104,10 @@
             <span class="track"><span class="thumb"></span></span>
             <span>Efek cahaya</span>
           </label>
+          <div class="volumes">
+            <label class="slider"><span>Musik</span><input id="opt-music-2" type="range" min="0" max="100" step="5" /></label>
+            <label class="slider"><span>Efek suara</span><input id="opt-sfx-2" type="range" min="0" max="100" step="5" /></label>
+          </div>
         </div>
       </section>
 

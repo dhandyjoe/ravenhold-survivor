@@ -9,6 +9,7 @@ function world(positions: [number, number][]) {
   const healed: number[] = [];
   const pushes: { id: number; kx: number; force: number }[] = [];
   const slows: { id: number; factor: number; seconds: number }[] = [];
+  const sounds: string[] = [];
   const host: SpecialHost = {
     player: { x: 0, y: 0 } as SpecialHost['player'],
     fx: { spawn: () => ({ rotation: 0 }), update: () => {}, clear: () => {}, activeCount: 0 } as unknown as SpecialHost['fx'],
@@ -47,8 +48,14 @@ function world(positions: [number, number][]) {
     shake: () => {},
     slowMotion: () => {},
     flash: () => {},
+    sound: (id) => {
+      sounds.push(id);
+    },
+    loop: (id) => {
+      sounds.push(id);
+    },
   };
-  return { host, enemies, hits, healed, pushes, slows, weapons: new SpecialWeapons(host) };
+  return { host, enemies, hits, healed, pushes, slows, sounds, weapons: new SpecialWeapons(host) };
 }
 
 const run = (w: SpecialWeapons, seconds: number, dt = 1 / 60) => {

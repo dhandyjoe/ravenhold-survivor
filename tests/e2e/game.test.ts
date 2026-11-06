@@ -1149,3 +1149,211 @@ describe('mode menu', () => {
     expect(problems).toEqual([]);
   });
 });
+
+describe('audio', () => {
+  /** Mencatat setiap suara yang lolos penjaga state, tanpa perlu ada file audio. */
+  const spy = () =>
+    page.evaluate(() => {
+      const played: string[] = [];
+      const a = __s.audio;
+      const orig = a.play.bind(a);
+      a.play = (id: string, ...rest: unknown[]) => {
+        played.push(id);
+        return orig(id, ...rest);
+      };
+      (window as any).__played = played;
+    });
+  const played = () => page.evaluate(() => [...(window as any).__played] as string[]);
+
+  it('demo di menu tidak memutar suara pertempuran', async () => {
+    await spy();
+    await page.waitForFunction(() => __s.aliveEnemies > 0, null, { timeout: NEXT_FRAME_TIMEOUT });
+    await page.evaluate(() => {
+      for (let i = 0; i < 300; i++) __s.step(1 / 60);
+    });
+    expect(await played()).toEqual([]);
+    expect(problems).toEqual([]);
+  });
+
+  it('saat bermain, tembakan dan luka pemain berbunyi; saat jeda, tidak', async () => {
+    await startQuiet();
+    await page.waitForFunction(() => __s.audio.live);
+    await spy();
+    await page.evaluate(() => {
+      __s.spawnEnemy('drone', __s.player.x + 120, __s.player.y);
+      __s.fireVolley(__s.nearestEnemy(480));
+      __s.hurtPlayer(1);
+    });
+    const ids = await played();
+    expect(ids).toContain('bow_shot');
+    expect(ids).toContain('hero_hurt');
+
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(() => __s.state === 'paused' && __s.audio.live === false);
+    await page.evaluate(() => {
+      (window as any).__played.length = 0;
+      __s.audio.sfx('bow_shot');
+      __s.audio.loop('rain_loop', 1);
+    });
+    expect(await played()).toEqual([]);
+  });
+
+  it('penggeser dan tombol M disimpan dan memengaruhi pemutar', async () => {
+    await page.evaluate(() => {
+      const el = document.getElementById('opt-music') as HTMLInputElement;
+      el.value = '30';
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    expect(await page.evaluate(() => [__s.audio.musicVolume, __s.save.musicVol])).toEqual([0.3, 0.3]);
+    expect(await page.evaluate(() => (document.getElementById('opt-music-2') as HTMLInputElement).value)).toBe('30');
+
+    await page.keyboard.press('KeyM');
+    expect(await page.evaluate(() => [__s.audio.muted, __s.save.muted])).toEqual([true, true]);
+    await page.keyboard.press('KeyM');
+    expect(await page.evaluate(() => [__s.audio.muted, __s.save.muted])).toEqual([false, false]);
+  });
+
+  it('musik: menu, lalu pagi saat bermain, lalu trek bos; memori tidak menumpuk', async () => {
+    await page.waitForFunction(() => __s.audio.music.current?.id === 'mus_menu', null, { timeout: 30000 });
+    await page.click('#btn-start');
+    await page.waitForFunction(() => __s.audio.music.current?.id === 'mus_pagi', null, { timeout: 30000 });
+    // Setelah fade-in selesai, volume = penggeser × takaran trek di katalog
+    await page.waitForFunction(() => __s.audio.music.current.level >= 1, null, { timeout: 15000 });
+    const vol = await page.evaluate(() => [__s.audio.music.current.snd.volume, __s.audio.musicVolume, __s.audio.music.current.gain]);
+    expect(vol[0]).toBeCloseTo(vol[1] * vol[2], 2);
+    expect(vol[0]).toBeGreaterThan(0.05);
+
+    await page.evaluate(() => {
+      __s.runTime = 299.9;
+    });
+    await page.waitForFunction(() => __s.audio.music.current?.id === 'mus_bos_ksatria', null, { timeout: 30000 });
+    await page.waitForFunction(() => __s.audio.music.layers.length === 1, null, { timeout: 15000 });
+    const cached = await page.evaluate(() => __s.cache.audio.getKeys().filter((k: string) => k.startsWith('mus_')));
+    expect(cached.length).toBeLessThanOrEqual(3);
+    expect(cached).not.toContain('mus_menu');
+    expect(problems).toEqual([]);
+  }, 90000);
+
+  it('musik yang bukan loop menyambung dirinya dengan crossfade sebelum habis', async () => {
+    await page.click('#btn-start');
+    await page.waitForFunction(() => __s.audio.music.current?.id === 'mus_pagi' && __s.audio.music.layers.length === 1, null, { timeout: 30000 });
+    await page.evaluate(() => {
+      (window as any).__first = __s.audio.music.current;
+      const snd = __s.audio.music.current.snd;
+      snd.seek = snd.duration - 2;
+    });
+    await page.waitForFunction(() => __s.audio.music.current !== (window as any).__first, null, { timeout: 10000 });
+    expect(await page.evaluate(() => [(window as any).__first.restarted, __s.audio.music.current.id])).toEqual([true, 'mus_pagi']);
+    await page.waitForFunction(() => __s.audio.music.layers.length === 1, null, { timeout: 15000 });
+    expect(problems).toEqual([]);
+  }, 90000);
+
+  it('semua efek suara termuat dan ter-decode', async () => {
+    await page.waitForFunction(() => __s.cache.audio.exists('bow_shot_1') && __s.cache.audio.exists('hero_hurt_4') && __s.cache.audio.exists('quake_rock_3'), null, { timeout: 30000 });
+    const bad = await page.evaluate(() =>
+      (__s.cache.audio.getKeys() as string[]).filter((k) => !k.startsWith('mus_') && !(__s.cache.audio.get(k)?.duration > 0.05)),
+    );
+    expect(bad).toEqual([]);
+    const count = await page.evaluate(() => (__s.cache.audio.getKeys() as string[]).filter((k) => !k.startsWith('mus_') && !k.startsWith('amb_')).length);
+    expect(count).toBeGreaterThanOrEqual(90);
+    expect(problems).toEqual([]);
+  }, 60000);
+
+  it('volume, nada, dan pan dari katalog diterapkan: dekat-kanan lebih keras dari jauh-kiri', async () => {
+    await startQuiet();
+    await page.waitForFunction(() => __s.audio.live && __s.cache.audio.exists('hit_armor_1'), null, { timeout: 30000 });
+    const r = await page.evaluate(() => {
+      const a = __s.audio;
+      const playing = () => [...a.pool.values()].flat().filter((snd: any) => snd.isPlaying);
+      // Dibaca dari currentConfig: getter `volume` Phaser membaca gain node yang tertinggal satu langkah
+      a.sfx('hit_armor', __s.player.x + 200, __s.player.y);
+      const near = playing().map((snd: any) => ({ vol: snd.currentConfig.volume, pan: snd.currentConfig.pan }))[0];
+      a.limiter.clear();
+      for (const snd of playing()) snd.stop();
+      a.sfx('hit_armor', __s.player.x - 900, __s.player.y);
+      const far = playing().map((snd: any) => ({ vol: snd.currentConfig.volume, pan: snd.currentConfig.pan }))[0];
+      return { near, far };
+    });
+    expect(r.near.vol).toBeGreaterThan(0.1);
+    expect(r.near.vol).toBeLessThan(0.7 * 0.86);
+    expect(r.near.pan).toBeGreaterThan(0);
+    expect(r.far.pan).toBeLessThan(0);
+    expect(r.far.vol).toBeLessThan(r.near.vol);
+  }, 60000);
+
+  it('tembakan, kena, dan tumbang benar-benar berbunyi', async () => {
+    await page.waitForFunction(() => __s.cache.audio.exists('bow_shot_1'), null, { timeout: 30000 });
+    await startQuiet();
+    await page.waitForFunction(() => __s.audio.live);
+    await spy();
+    await page.evaluate(() => {
+      __s.spawnEnemy('blob', __s.player.x + 120, __s.player.y);
+      __s.fireVolley(__s.nearestEnemy(480));
+      __s.hurtPlayer(1);
+    });
+    const ids = await played();
+    expect(ids).toContain('bow_shot');
+    expect(ids).toContain('hero_hurt');
+    expect(await page.evaluate(() => __s.audio.active)).toBeGreaterThanOrEqual(1);
+    // Musuh kena (bukan mati) memutar suara menurut jenisnya, lalu tumbang memutar suara tumbang
+    await page.evaluate(() => {
+      (window as any).__played.length = 0;
+      const e = __s.enemies.find((o: any) => o.alive && o.kind === 'blob');
+      __s.damageEnemy(e, 1, 1, 0, 0);
+      __s.damageEnemy(e, 1e9, 1, 0, 0);
+    });
+    const after = await played();
+    expect(after).toContain('hit_bone');
+    expect(after).toContain('die_bone');
+  }, 60000);
+
+  it.each([
+    ['meteor', 'meteor_impact'],
+    ['rain', 'rain_release'],
+    ['thunder', 'thunder_crack'],
+    ['moon', 'moon_slash'],
+    ['ravens', 'raven_wings'],
+    ['tornado', 'tornado_loop'],
+    ['flames', 'flames_ignite'],
+    ['holy', 'holy_pulse'],
+    ['frost', 'frost_cast'],
+    ['quake', 'quake_start'],
+  ])('pusaka %s meminta suaranya (%s)', async (id, sound) => {
+    await startQuiet();
+    await page.waitForFunction(() => __s.audio.live);
+    await page.evaluate(() => {
+      const asked: string[] = [];
+      const a = __s.audio;
+      for (const fn of ['sfx', 'loop'] as const) {
+        const orig = a[fn].bind(a);
+        a[fn] = (sid: string, ...rest: unknown[]) => {
+          asked.push(sid);
+          return orig(sid, ...rest);
+        };
+      }
+      (window as any).__asked = asked;
+      for (let i = 0; i < 40; i++) {
+        const t = (i / 40) * Math.PI * 2;
+        __s.spawnEnemy('drone', __s.player.x + Math.cos(t) * 170, __s.player.y + Math.sin(t) * 170);
+      }
+    });
+    await page.evaluate((special) => __s.specials.setTier(special, 3), id);
+    await page.waitForFunction((want) => (window as any).__asked.includes(want), sound, { timeout: NEXT_FRAME_TIMEOUT });
+    expect(problems).toEqual([]);
+  });
+
+  it('level-up membunyikan stinger dan kartu', async () => {
+    await startQuiet();
+    await spy();
+    await page.evaluate(() => {
+      __s.level = 2;
+      __s.xp = 1e6;
+    });
+    await page.waitForFunction(() => __s.state === 'levelup');
+    await page.click('.card');
+    const ids = await played();
+    expect(ids).toContain('stg_levelup');
+    expect(ids).toContain('card_appear');
+    expect(ids.some((id) => id.startsWith('card_pick'))).toBe(true);
+  });
+});

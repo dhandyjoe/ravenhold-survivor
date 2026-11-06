@@ -1,4 +1,5 @@
 import { MAX_LEVEL, RARITY, RUN_SECONDS } from './config';
+import type { SoundId } from './audioCatalog';
 import { ALL_UPGRADES, type Upgrade } from './upgrades';
 
 /**
@@ -45,6 +46,9 @@ class UIController {
   onMenu = () => {};
   onPauseRequest = () => {};
   onGlowChange = (_on: boolean) => {};
+  onVolumeChange = (_kind: 'music' | 'sfx', _value: number) => {};
+  onMuteToggle = () => {};
+  onUiSound = (_id: SoundId) => {};
 
   constructor() {
     $('btn-start').addEventListener('click', () => this.onStart());
@@ -61,6 +65,24 @@ class UIController {
         this.onGlowChange(on);
       });
     }
+    for (const [kind, ids] of [['music', ['opt-music', 'opt-music-2']], ['sfx', ['opt-sfx', 'opt-sfx-2']]] as const) {
+      for (const id of ids) {
+        $<HTMLInputElement>(id).addEventListener('input', (e) => {
+          const v = Number((e.target as HTMLInputElement).value) / 100;
+          this.setVolumes(kind === 'music' ? v : null, kind === 'sfx' ? v : null);
+          this.onVolumeChange(kind, v);
+        });
+      }
+    }
+    // Satu pendengar untuk semua tombol dan sakelar, supaya tombol baru otomatis bersuara
+    document.addEventListener('click', (e) => {
+      const t = e.target as HTMLElement | null;
+      if (t?.closest('.btn')) this.onUiSound('ui_click');
+      else if (t?.closest('.toggle')) this.onUiSound('ui_toggle');
+    });
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'KeyM' && !e.repeat) this.onMuteToggle();
+    });
     $('start-eyebrow').textContent = `Survival · ${RUN_SECONDS / 60} menit · Level maks ${MAX_LEVEL}`;
     $('lvl-max').textContent = `/${MAX_LEVEL}`;
     const touch = window.matchMedia('(pointer: coarse)').matches;
@@ -72,6 +94,18 @@ class UIController {
   setGlowToggle(on: boolean) {
     $<HTMLInputElement>('opt-glow').checked = on;
     $<HTMLInputElement>('opt-glow-2').checked = on;
+  }
+
+  /** Mengisi penggeser volume (0..1). `null` berarti tidak diubah. */
+  setVolumes(music: number | null, sfx: number | null) {
+    for (const [v, ids] of [[music, ['opt-music', 'opt-music-2']], [sfx, ['opt-sfx', 'opt-sfx-2']]] as const) {
+      if (v === null) continue;
+      for (const id of ids) {
+        const el = $<HTMLInputElement>(id);
+        el.value = String(Math.round(v * 100));
+        el.style.setProperty('--fill', `${Math.round(v * 100)}%`);
+      }
+    }
   }
 
   show(screen: Screen) {
@@ -127,6 +161,7 @@ class UIController {
     const pick = (u: Upgrade) => {
       if (picked) return;
       picked = true;
+      this.onUiSound(special ? 'card_pick_special' : u.rarity === 'common' ? 'card_pick' : 'card_pick_rare');
       window.removeEventListener('keydown', keyHandler);
       onPick(u);
     };
@@ -146,6 +181,7 @@ class UIController {
     };
     window.addEventListener('keydown', keyHandler);
     this.renderLoadout(levels);
+    this.onUiSound('card_appear');
     this.show('levelup');
     (this.cards.firstElementChild as HTMLElement | null)?.focus({ preventScroll: true });
   }
@@ -233,6 +269,7 @@ class UIController {
     this.redirectTimer = window.setInterval(() => {
       left--;
       count.textContent = String(left);
+      this.onUiSound('ui_tick');
       if (left <= 0) {
         this.cancelRedirect();
         this.onMenu();

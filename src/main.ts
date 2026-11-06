@@ -25,6 +25,9 @@ if (import.meta.env.DEV || location.search.includes('debug')) {
   (window as unknown as { __game: Phaser.Game }).__game = game;
 }
 
+// Panel uji dengar suara: buka dengan ?debug&soundtest
+if (location.search.includes('soundtest')) void import('./soundtest');
+
 let resizeTimer = 0;
 const onResize = () => {
   clearTimeout(resizeTimer);

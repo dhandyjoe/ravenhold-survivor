@@ -1,8 +1,10 @@
 import * as Phaser from 'phaser';
-import { COLORS, END_REDIRECT_SECONDS, ENEMIES, GEAR, LIGHTING, MAX_LEVEL, PALETTE, PLAYER, QUALITY, RUN_SECONDS, SPAWN, SPECIAL_FX, WEAPON, hex, xpForLevel, type EnemyKind, type SpecialId } from '../config';
+import { AUDIO, COLORS, END_REDIRECT_SECONDS, ENEMIES, GEAR, LIGHTING, MAX_LEVEL, PALETTE, PLAYER, QUALITY, RUN_SECONDS, SPAWN, SPECIAL_FX, WEAPON, hex, xpForLevel, type EnemyKind, type SpecialId } from '../config';
 import { effectiveLevel, enemyDamageMul, enemyHpMul, enemySpeedMul, pickKind, spawnRate, swarmSize, targetPopulation } from '../balance';
 import { DIGIT_FONT, RING_RADIUS } from '../art/fx';
 import { FxPool } from '../fx';
+import { GameAudio } from '../audio';
+import type { SoundId } from '../audioCatalog';
 import { FrameGovernor, gameSize, resolution } from '../quality';
 import { SpecialWeapons, type SpecialTarget } from '../specials';
 import { Controls } from '../input';
@@ -53,6 +55,10 @@ interface Enemy {
   slowUntil: number;
   statusTint: number; // warna status yang sedang terpasang, 0 berarti tidak ada
 }
+
+const HIT_SOUND: Record<EnemyKind, SoundId> = { drone: 'hit_flesh', blob: 'hit_bone', brute: 'hit_stone', titan: 'hit_armor', wyrm: 'hit_scale' };
+const DIE_SOUND: Record<EnemyKind, SoundId> = { drone: 'die_goblin', blob: 'die_bone', brute: 'die_ogre', titan: 'die_knight', wyrm: 'die_dragon' };
+const BELLS = [AUDIO.senjaAt, AUDIO.malamAt];
 
 const POISON_TINT = hex(PALETTE.fx.poisonTint);
 const FROST_TINT = hex(PALETTE.fx.frostTint);
@@ -174,6 +180,12 @@ export class GameScene extends Phaser.Scene {
   private numbersLeft = NUMBERS_PER_FRAME;
   private specialHudTimer = 0;
   private reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+  private audio!: GameAudio;
+  private killsFrame = 0;
+  private heroStepNow = -1;
+  private heartbeat = 0;
+  private whirl = 0;
+  private bellNext = 0;
   private governor = new FrameGovernor();
   private qualityTier = 0;
 
@@ -185,6 +197,12 @@ export class GameScene extends Phaser.Scene {
 
   create() {
     this.save = load();
+    this.audio = new GameAudio(this);
+    this.audio.muted = this.save.muted;
+    this.audio.musicVolume = this.save.musicVol;
+    this.audio.sfxVolume = this.save.sfxVol;
+    this.audio.armUnlock();
+    ui.setVolumes(this.save.musicVol, this.save.sfxVol);
     const bakeStart = performance.now();
     this.art = createTextures(this);
     this.bakeMs = Math.round(performance.now() - bakeStart);
@@ -302,6 +320,7 @@ export class GameScene extends Phaser.Scene {
 
     this.prewarmShaders();
     this.enterMenu();
+    this.audio.preload();
   }
 
   /**
@@ -347,6 +366,8 @@ export class GameScene extends Phaser.Scene {
         if (!this.reducedMotion) this.slowLeft = Math.max(this.slowLeft, seconds);
       },
       flash: (x, y, color, power, radius) => this.lighting.flash(x, y, color, power, radius),
+      sound: (id, x, y) => this.audio.sfx(id, x, y),
+      loop: (id, seconds) => this.audio.loop(id, seconds),
     });
   }
 
@@ -367,6 +388,23 @@ export class GameScene extends Phaser.Scene {
     ui.onResume = () => this.togglePause();
     ui.onPauseRequest = () => this.togglePause();
     ui.onMenu = () => this.enterMenu();
+    ui.onUiSound = (id) => this.audio.ui(id);
+    ui.onVolumeChange = (kind, value) => {
+      if (kind === 'music') {
+        this.audio.musicVolume = value;
+        this.save.musicVol = value;
+      } else {
+        this.audio.sfxVolume = value;
+        this.save.sfxVol = value;
+      }
+      save(this.save);
+    };
+    ui.onMuteToggle = () => {
+      this.audio.muted = !this.audio.muted;
+      this.save.muted = this.audio.muted;
+      save(this.save);
+      ui.toast(this.audio.muted ? 'Suara dimatikan (M)' : 'Suara menyala (M)');
+    };
     ui.onGlowChange = (on) => {
       this.save.glow = on;
       save(this.save);
@@ -397,6 +435,7 @@ export class GameScene extends Phaser.Scene {
   /** Menerapkan tingkat kualitas saat ini. Mengembalikan true kalau ada yang benar-benar berubah. */
   private applyQuality() {
     const q = QUALITY.tiers[this.qualityTier];
+    this.audio.setVoiceLimit(this.qualityTier >= 2);
     const before = this.bloom?.active;
     resolution.maxPixels = q.maxPixels;
     const s = gameSize();
@@ -442,10 +481,12 @@ export class GameScene extends Phaser.Scene {
   private togglePause() {
     if (this.state === 'playing') {
       this.state = 'paused';
+      this.audio.ui('ui_pause');
       this.controls.setEnabled(false);
       ui.show('pause');
     } else if (this.state === 'paused') {
       this.state = 'playing';
+      this.audio.ui('ui_resume');
       this.controls.setEnabled(true);
       ui.show(null);
     }
@@ -462,6 +503,13 @@ export class GameScene extends Phaser.Scene {
       this.save.bestLevel = this.level;
       save(this.save);
     }
+    if (win) {
+      this.audio.stinger('stg_win');
+      this.audio.ui('hero_win');
+    } else {
+      this.audio.stinger('stg_lose');
+      this.audio.ui('hero_death');
+    }
     if (!win) {
       this.bursts.get('hero')!.explode(40, this.player.x, this.player.y);
       this.setHeroVisible(false);
@@ -472,6 +520,7 @@ export class GameScene extends Phaser.Scene {
       if (this.state !== 'over') return;
       ui.showHud(false);
       ui.showEnd(win, stats, newRecord, win ? END_REDIRECT_SECONDS : 0);
+      if (newRecord) this.audio.ui('stg_record');
     }, win ? 200 : 750);
   }
 
@@ -492,6 +541,11 @@ export class GameScene extends Phaser.Scene {
     this.slowLeft = 0;
     this.warnedEnd = false;
     this.extraVolley = 0;
+    this.killsFrame = 0;
+    this.heartbeat = 0;
+    this.whirl = 0;
+    this.bellNext = 0;
+    this.audio.reset();
     this.specials.reset();
     ui.setSpecialSlots([]);
     this.vx = this.vy = 0;
@@ -538,6 +592,8 @@ export class GameScene extends Phaser.Scene {
     const dt = Math.min(deltaMs, 50) / 1000;
     if (this.state === 'playing' || this.state === 'menu') this.step(dt);
     this.updateCamera(dt);
+    const cam = this.cameras.main;
+    this.audio.update(dt, { state: this.state, runTime: this.runTime, boss: this.boss?.kind ?? null, x: this.player.x, y: this.player.y, halfView: cam.width / cam.zoom / 2 });
     this.updateDay();
     this.drawHpBar();
     if (this.state !== 'menu') {
@@ -552,6 +608,7 @@ export class GameScene extends Phaser.Scene {
     const dt = this.slowLeft > 0 ? rawDt * SPECIAL_FX.slowScale : rawDt;
     this.slowLeft = Math.max(0, this.slowLeft - rawDt);
     this.numbersLeft = NUMBERS_PER_FRAME;
+    this.killsFrame = 0;
     this.clock += dt;
     if (playing) this.runTime += dt;
 
@@ -565,11 +622,13 @@ export class GameScene extends Phaser.Scene {
     this.updateBolts(dt);
     this.updateGems(dt, playing);
     this.specials.update(dt);
+    this.audio.tick(dt);
     this.fx.update(dt);
     this.updateNumbers(dt);
     this.lighting.tick(dt);
 
     if (!playing) return;
+    this.updateAmbientSounds(dt);
     this.specialHudTimer -= rawDt;
     if (this.specialHudTimer <= 0) {
       this.specialHudTimer = 0.1;
@@ -582,10 +641,13 @@ export class GameScene extends Phaser.Scene {
     if (this.bossIndex < SPAWN.bosses.length && this.runTime >= SPAWN.bosses[this.bossIndex].at) {
       const kind = SPAWN.bosses[this.bossIndex++].kind;
       this.setBoss(this.spawnEnemy(kind) ?? null);
+      this.audio.sfx(kind === 'wyrm' ? 'boss_dragon_enter' : 'boss_knight_enter');
+      this.audio.duck(AUDIO.bossDuck.seconds, AUDIO.bossDuck.depth);
       ui.toast(`${ENEMIES[kind].name} datang!`, 'danger');
     }
     if (this.runTime >= RUN_SECONDS - 60 && !this.warnedEnd) {
       this.warnedEnd = true;
+      this.audio.sfx('bell_final');
       ui.toast('Satu menit lagi!');
     }
     if (this.hp <= 0) {
@@ -593,6 +655,24 @@ export class GameScene extends Phaser.Scene {
       else this.endRun(false);
     } else if (this.runTime >= RUN_SECONDS) this.endRun(true);
     else if (this.level < MAX_LEVEL && this.xp >= xpForLevel(this.level)) this.levelUp();
+  }
+
+  /** Suara latar yang bergantung pada keadaan ronde: pedang berputar, detak jantung, lonceng pergantian waktu. */
+  private updateAmbientSounds(dt: number) {
+    const a = this.audio;
+    if (this.stats.orbitCount > 0 && (this.whirl -= dt) <= 0) {
+      this.whirl = 0.25;
+      a.loop('sword_whirl', 0.5, Math.min(1, this.stats.orbitCount / 3));
+    }
+    if (this.hp / this.stats.maxHp < AUDIO.lowHpFraction && (this.heartbeat -= dt) <= 0) {
+      this.heartbeat = AUDIO.heartbeatEvery;
+      a.sfx('hero_heartbeat');
+    }
+    if (this.bellNext < BELLS.length && this.runTime >= BELLS[this.bellNext]) {
+      this.bellNext++;
+      a.sfx('bell_cycle');
+    }
+    if (this.killsFrame >= AUDIO.crowdKills) a.sfx('die_crowd');
   }
 
   private movePlayer(dt: number, playing: boolean) {
@@ -645,6 +725,9 @@ export class GameScene extends Phaser.Scene {
     } else {
       step = Math.floor(this.clock * 2.6) % HERO_IDLE;
     }
+    // Langkah di tengah dan di akhir siklus lari
+    if (moving && step !== this.heroStepNow && step % (HERO_WALK / 2) === 0) this.audio.sfx('foot_grass');
+    this.heroStepNow = moving ? step : -1;
     const frame = heroFrame(view, moving, step);
     if (frame !== this.heroFrameNow) {
       this.heroFrameNow = frame;
@@ -788,6 +871,7 @@ export class GameScene extends Phaser.Scene {
       const a = (i / n) * Math.PI * 2;
       this.spawnEnemy('drone', this.player.x + Math.cos(a) * r, this.player.y + Math.sin(a) * r);
     }
+    this.audio.sfx('swarm_horn');
     ui.toast('Gelombang datang!', 'danger');
   }
 
@@ -995,6 +1079,7 @@ export class GameScene extends Phaser.Scene {
       // Tabrakan dengan pemain
       if (d < contact) {
         if (this.clock >= e.nextAttack) {
+          if (spec.boss) this.audio.sfx('boss_attack', img.x, img.y);
           e.attack = 1;
           e.nextAttack = this.clock + 0.8;
         }
@@ -1038,6 +1123,8 @@ export class GameScene extends Phaser.Scene {
     if (art.stomp > 0 && step !== e.stepNow) {
       e.stepNow = step;
       if (step % (art.walk / 2) === 0) {
+        if (e.kind === 'titan' || e.kind === 'wyrm') this.audio.sfx('step_boss', img.x, img.y);
+        else if (e.kind === 'brute') this.audio.sfx('step_ogre', img.x, img.y);
         const feet = art.feet * (img.scaleY / art.strip.scale);
         this.fx.spawn({ key: 'puff', x: img.x, y: img.y + feet, life: 0.42, depth: 4.5, s0: (e.radius / 30) * 0.6, s1: e.radius / 30, a0: 0.5, a1: 0, tint: art.smoke });
       }
@@ -1060,17 +1147,19 @@ export class GameScene extends Phaser.Scene {
     const s = this.stats;
     this.invulnUntil = this.clock + PLAYER.invulnMs / 1000;
     if (Math.random() < s.dodge) {
+      this.audio.sfx('hero_dodge');
       this.fx.spawn({ key: 'puff', x: this.player.x, y: this.player.y, vy: -30, life: 0.4, depth: 10.5, s0: 0.6, s1: 1.3, a0: 0.7, a1: 0, spin: 2, tint: hex(PALETTE.fx.dust) });
       return;
     }
     this.hp -= dmg * (1 - s.armor);
+    if (this.hp > 0) this.audio.sfx('hero_hurt');
     this.shake(140, 0.006);
     ui.hurtFlash();
     const thorns = s.thorns > 0 ? ENEMIES.drone.hp * enemyHpMul(this.threat()) * GEAR.thorns * s.thorns : 0;
     // Musuh di sekitar terdorong sedikit, supaya pemain punya celah untuk kabur
     this.eachInRadius(this.player.x, this.player.y, GEAR.thornsRadius, (o, _d, dx, dy) => {
       const k = o as Enemy;
-      if (thorns > 0) this.damageEnemy(k, thorns, dx, dy, 300);
+      if (thorns > 0) this.damageEnemy(k, thorns, dx, dy, 300, false, true);
       else this.pushEnemy(k, dx, dy, 300);
     });
   }
@@ -1088,6 +1177,8 @@ export class GameScene extends Phaser.Scene {
     this.eachInRadius(x, y, GEAR.reviveRadius, (o, _d, dx, dy) => this.pushEnemy(o as Enemy, dx, dy, 1000));
     this.shake(320, 0.014);
     this.lighting.flash(x, y, hex(PALETTE.fx.fire), 3, GEAR.reviveRadius * 2);
+    this.audio.sfx('hero_gasp');
+    this.audio.sfx('revive_phoenix');
     ui.toast('Bulu Phoenix membangkitkan Anda!');
   }
 
@@ -1119,14 +1210,18 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private damageEnemy(e: Enemy, amount: number, kx: number, ky: number, knock: number, heavy = false) {
+  /** `heavy`: serangan pusaka (angka emas, suaranya milik pusaka). `silent`: sudah punya suara sendiri. */
+  private damageEnemy(e: Enemy, amount: number, kx: number, ky: number, knock: number, heavy = false, silent = false) {
     if (!e.alive) return;
     const s = this.stats;
     const crit = Math.random() < s.critChance;
     const dmg = crit ? amount * s.critMul : amount;
     e.hp -= dmg;
     // Titah Algojo: musuh biasa yang nyaris mati langsung tumbang
-    if (s.execute > 0 && e.hp > 0 && !ENEMIES[e.kind].boss && e.hp / e.maxHp < s.execute) e.hp = 0;
+    if (s.execute > 0 && e.hp > 0 && !ENEMIES[e.kind].boss && e.hp / e.maxHp < s.execute) {
+      e.hp = 0;
+      this.audio.sfx('hit_execute', e.img.x, e.img.y);
+    }
     this.pushEnemy(e, kx, ky, knock);
     e.hitPop = 1;
     e.flashUntil = this.clock + 0.07;
@@ -1136,6 +1231,10 @@ export class GameScene extends Phaser.Scene {
     }
     this.showNumber(e.img.x, e.img.y - e.radius, dmg, crit, heavy);
     if (e === this.boss) ui.setBossHp(e.hp / e.maxHp);
+    if (e.hp > 0 && !heavy && !silent) {
+      this.audio.sfx(HIT_SOUND[e.kind], e.img.x, e.img.y);
+      if (crit) this.audio.sfx('hit_crit', e.img.x, e.img.y);
+    }
     if (e.hp <= 0) this.killEnemy(e);
   }
 
@@ -1144,6 +1243,8 @@ export class GameScene extends Phaser.Scene {
     const y = e.img.y;
     const spec = ENEMIES[e.kind];
     const big = spec.boss ? 60 : e.kind === 'brute' ? 12 : 6;
+    this.killsFrame++;
+    if (spec.boss || this.killsFrame < AUDIO.crowdKills) this.audio.sfx(DIE_SOUND[e.kind], x, y);
     this.bursts.get(e.kind)!.explode(big, x, y - e.radius * 0.4);
 
     // Tubuh tertekan dan memudar, lalu kepulan debu sesuai jenisnya
@@ -1164,6 +1265,7 @@ export class GameScene extends Phaser.Scene {
       this.hp = Math.min(this.stats.maxHp, this.hp + 25);
       // Bos kalah: semua kristal di dunia tertarik ke pemain
       for (const g of this.gems) if (g.alive) g.pulled = true;
+      this.audio.sfx('gem_recall');
       if (this.state === 'playing') ui.toast(`${spec.name} tumbang!`);
     } else {
       this.dropGem(x, y, e.xp, e.xp >= 5);
@@ -1172,6 +1274,7 @@ export class GameScene extends Phaser.Scene {
       this.kills++;
       if (this.stats.lifesteal > 0 && Math.random() < this.stats.lifesteal) {
         this.hp = Math.min(this.stats.maxHp, this.hp + GEAR.lifestealHeal);
+        this.audio.sfx('heal_small');
       }
     }
     this.removeEnemy(e);
@@ -1305,7 +1408,8 @@ export class GameScene extends Phaser.Scene {
           if (dx * dx + dy * dy < rr * rr) {
             e.lastOrbitHit = this.clock;
             const d = Math.hypot(dx, dy) || 1;
-            this.damageEnemy(e, WEAPON.orbitDamage * s.damageMul * s.orbitMul, dx / d, dy / d, 160);
+            this.damageEnemy(e, WEAPON.orbitDamage * s.damageMul * s.orbitMul, dx / d, dy / d, 160, false, true);
+            this.audio.sfx('sword_hit', ox, oy);
           }
         });
       }
@@ -1329,6 +1433,8 @@ export class GameScene extends Phaser.Scene {
     const n = this.stats.projectiles;
     const spread = 0.16;
     for (let i = 0; i < n; i++) this.fireBolt(base + (i - (n - 1) / 2) * spread);
+    this.audio.sfx('bow_shot');
+    if (n >= 3) this.audio.sfx('bow_multi');
   }
 
   private fireBolt(angle: number) {
@@ -1405,14 +1511,19 @@ export class GameScene extends Phaser.Scene {
     if (e.alive && s.poison > 0) {
       e.dotDps = b.damage * GEAR.poisonDps * s.poison;
       e.dotUntil = this.clock + GEAR.poisonSeconds;
+      this.audio.sfx('arrow_poison', x, y);
     }
-    if (e.alive && s.frost > 0) this.slowEnemy(e, 1 - GEAR.frostSlow * s.frost, GEAR.frostSeconds);
+    if (e.alive && s.frost > 0) {
+      this.slowEnemy(e, 1 - GEAR.frostSlow * s.frost, GEAR.frostSeconds);
+      this.audio.sfx('arrow_frost', x, y);
+    }
     if (s.explode > 0) {
       const r = GEAR.explodeRadius + GEAR.explodeRadiusPerLevel * (s.explode - 1);
       const dmg = b.damage * GEAR.explodeDamage * s.explode;
       this.eachInRadius(x, y, r, (o, _d, dx, dy) => {
-        if (o !== e) this.damageEnemy(o as Enemy, dmg, dx, dy, 140);
+        if (o !== e) this.damageEnemy(o as Enemy, dmg, dx, dy, 140, false, true);
       });
+      this.audio.sfx('arrow_explode', x, y);
       const scale = (r / RING_RADIUS) * INV;
       this.fx.spawn({ key: 'fxBlast', x, y, life: 0.22, depth: 7.8, s0: scale * 0.5, s1: scale * 1.1, a0: 0.95, a1: 0, add: true });
     }
@@ -1440,6 +1551,7 @@ export class GameScene extends Phaser.Scene {
     b.vy = Math.sin(a) * speed;
     b.life = Math.max(b.life, 0.5);
     b.img.setRotation(a);
+    this.audio.sfx('arrow_bounce', x, y);
     return true;
   }
 
@@ -1449,6 +1561,7 @@ export class GameScene extends Phaser.Scene {
     const scale = (radius / RING_RADIUS) * INV;
     this.fx.spawn({ key: 'fxRune', x: px, y: py, life: 0.46, depth: 3.5, s0: scale * 0.35, s1: scale, a0: 1, a1: 0, spin: 1.4, follow: this.player });
     this.fx.spawn({ key: 'fxShock', x: px, y: py, life: 0.3, depth: 3.6, s0: scale * 0.2, s1: scale * 1.05, a0: 0.8, a1: 0, tint: hex(PALETTE.fx.rune), follow: this.player });
+    this.audio.sfx('nova_cast');
     this.eachInRadius(px, py, radius, (e, _d, dx, dy) => this.damageEnemy(e as Enemy, damage, dx, dy, 320));
   }
 
@@ -1512,6 +1625,7 @@ export class GameScene extends Phaser.Scene {
         img.y += (dy / (d || 1)) * step;
         if (d < PLAYER.radius + 4) {
           this.bursts.get('pickup')!.explode(4, img.x, img.y);
+          if (playing) this.audio.sfx(g.value >= 5 ? 'gem_big' : 'gem_small');
           if (playing && this.level < MAX_LEVEL) this.xp += g.value * this.stats.xpMul;
           this.removeGem(g);
         }
@@ -1527,6 +1641,7 @@ export class GameScene extends Phaser.Scene {
     // Level kelipatan lima menawarkan pusaka, selama masih ada yang bisa diambil
     const specials = isSpecialLevel(this.level) ? rollSpecials(this.levels) : [];
     const special = specials.length > 0;
+    this.audio.stinger(special ? 'stg_pusaka' : 'stg_levelup');
     const choices = special ? specials : rollChoices(this.levels, 3, Math.random, this.stats.luck);
     ui.showLevelUp(this.level, choices, this.levels, (u) => this.applyUpgrade(u), special);
   }
@@ -1539,6 +1654,7 @@ export class GameScene extends Phaser.Scene {
     this.hp = Math.min(this.stats.maxHp, this.hp);
     this.rebuildSwords();
     if (u.tag === 'Pusaka') {
+      this.audio.ui('hero_power');
       this.specials.setTier(u.id as SpecialId, next);
       ui.setSpecialSlots(this.specials.owned.map((id) => ({ id, icon: ALL_UPGRADES.find((o) => o.id === id)!.icon, tier: this.levels[id] })));
     }

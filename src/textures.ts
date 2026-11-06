@@ -1,5 +1,5 @@
 import * as Phaser from 'phaser';
-import { COLORS, type EnemyKind } from './config';
+import { COLORS, PALETTE, type EnemyKind } from './config';
 import { bakeHero } from './art/hero';
 import { bakeArrow, bakeBow, bakeGuardSword } from './art/weapons';
 import { createEnvironment } from './art/environment';
@@ -44,29 +44,52 @@ function glow(ctx: Ctx, x: number, y: number, r: number, color: string, alpha: n
   ctx.fill();
 }
 
-function shadedFill(ctx: Ctx, cx: number, cy: number, r: number, light: string, dark: string) {
-  const g = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
-  g.addColorStop(0, light);
-  g.addColorStop(1, dark);
-  return g;
+function shapeFill(ctx: Ctx, pts: number[], fill: string) {
+  ctx.fillStyle = fill;
+  ctx.beginPath();
+  ctx.moveTo(pts[0], pts[1]);
+  for (let i = 2; i < pts.length; i += 2) ctx.lineTo(pts[i], pts[i + 1]);
+  ctx.closePath();
+  ctx.fill();
 }
 
 export function createTextures(scene: Phaser.Scene): Art {
-  // Kristal XP
+  // Permata XP: potongan berfaset beroutline gelap hangat, zamrud kecil dan topas besar
   const gem = (key: string, color: string, s: number) =>
     make(scene, key, 32, 32, (ctx) => {
-      glow(ctx, 16, 16, 15, color, 0.45);
+      glow(ctx, 16, 17, 15, color, 0.28);
+      ctx.save();
+      ctx.translate(16, 17);
+      ctx.scale(s, s);
+      const P = (pts: number[]) => pts.map((v) => v - 16);
+      const crown = P([10, 10, 22, 10, 25.5, 14.5, 6.5, 14.5]);
+      const left = P([6.5, 14.5, 16, 14.5, 16, 26]);
+      const right = P([16, 14.5, 25.5, 14.5, 16, 26]);
+      shapeFill(ctx, crown, mix(color, '#fff4d6', 0.55));
+      shapeFill(ctx, left, mix(color, '#fff4d6', 0.1));
+      shapeFill(ctx, right, mix(color, PALETTE.outline, 0.45));
+      // Faset tengah mahkota lebih terang, memberi kesan kilap
+      shapeFill(ctx, P([13, 10, 19, 10, 20.5, 14.5, 11.5, 14.5]), mix(color, '#ffffff', 0.7));
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = 1.4;
+      ctx.strokeStyle = PALETTE.outline;
       ctx.beginPath();
-      ctx.moveTo(16, 16 - 8 * s);
-      ctx.lineTo(16 + 5.5 * s, 16);
-      ctx.lineTo(16, 16 + 8 * s);
-      ctx.lineTo(16 - 5.5 * s, 16);
+      const outline = P([10, 10, 22, 10, 25.5, 14.5, 16, 26, 6.5, 14.5]);
+      ctx.moveTo(outline[0], outline[1]);
+      for (let i = 2; i < outline.length; i += 2) ctx.lineTo(outline[i], outline[i + 1]);
       ctx.closePath();
-      ctx.fillStyle = shadedFill(ctx, 16, 16, 8, mix(color, '#ffffff', 0.5), color);
+      ctx.moveTo(P([6.5])[0], P([14.5])[0]);
+      ctx.lineTo(P([25.5])[0], P([14.5])[0]);
+      ctx.stroke();
+      // Kilau kecil di sudut kiri atas
+      ctx.fillStyle = rgba('#ffffff', 0.9);
+      ctx.beginPath();
+      ctx.ellipse(12.5 - 16, 12 - 16, 1.6, 0.9, -0.5, 0, Math.PI * 2);
       ctx.fill();
+      ctx.restore();
     });
   gem('gem', COLORS.gem, 1);
-  gem('gemBig', COLORS.gemBig, 1.25);
+  gem('gemBig', COLORS.gemBig, 1.2);
 
   // Partikel
   make(scene, 'spark', 16, 16, (ctx) => {

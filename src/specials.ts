@@ -3,6 +3,7 @@ import { PALETTE, SPECIALS, SPECIAL_FX, hex, type SpecialId } from './config';
 import { RING_RADIUS } from './art/fx';
 import { specialDamage } from './balance';
 import type { FxPool } from './fx';
+import type { SoundId } from './audioCatalog';
 import { TEX_SCALE } from './art/kit';
 
 /** Musuh sejauh yang perlu diketahui pusaka. */
@@ -34,9 +35,13 @@ export interface SpecialHost {
   shake(ms: number, power: number): void;
   slowMotion(seconds: number): void;
   flash(x: number, y: number, color: number, power: number, radius: number): void;
+  /** Efek suara; posisi opsional untuk pan dan jarak. */
+  sound(id: SoundId, x?: number, y?: number): void;
+  /** Suara berulang selama `seconds`. */
+  loop(id: SoundId, seconds: number): void;
 }
 
-type StrikeKind = 'meteor' | 'burn' | 'rainSpawn' | 'rainHit' | 'thunder' | 'moon' | 'flame' | 'holy' | 'shatter' | 'quake';
+type StrikeKind = 'meteorCue' | 'meteor' | 'burn' | 'rainSpawn' | 'rainHit' | 'thunder' | 'moon' | 'flame' | 'holy' | 'shatter' | 'quake';
 
 interface Strike {
   at: number;
@@ -175,7 +180,8 @@ export class SpecialWeapons {
       if (this.clock < s.at) continue;
       list[i] = list[list.length - 1];
       list.pop();
-      if (s.kind === 'meteor') this.explodeMeteor(s);
+      if (s.kind === 'meteorCue') this.host.sound('meteor_fall', s.x, s.y);
+      else if (s.kind === 'meteor') this.explodeMeteor(s);
       else if (s.kind === 'burn') this.burn(s);
       else if (s.kind === 'rainSpawn') this.dropArrow(s);
       else if (s.kind === 'rainHit') this.arrowHit(s);
@@ -206,10 +212,13 @@ export class SpecialWeapons {
         this.launchMeteor(this.point.x, this.point.y, spec.radius, damage, i * FX.meteorGap);
       }
     } else if (id === 'rain') {
+      h.sound('rain_release');
+      h.loop('rain_loop', FX.rainDuration + FX.rainFall);
       for (let i = 0; i < spec.count; i++) {
         this.schedule('rainSpawn', (i / spec.count) * FX.rainDuration, 0, 0, spec.radius, damage);
       }
     } else if (id === 'thunder') {
+      h.sound('thunder_rumble');
       for (let i = 0; i < spec.count; i++) {
         this.schedule('thunder', i * FX.thunderGap, 0, 0, spec.radius, damage);
       }
@@ -219,10 +228,16 @@ export class SpecialWeapons {
       }
     } else if (id === 'ravens') {
       this.releaseRavens(spec.count, damage);
+      for (let i = 0; i < 3; i++) h.sound('raven_caw');
+      h.loop('raven_wings', FX.ravenLife);
     } else if (id === 'tornado') {
       this.summonTornados(spec.count, spec.radius, damage);
+      h.sound('tornado_start');
+      h.loop('tornado_loop', FX.tornadoLife);
     } else if (id === 'flames') {
       this.igniteRing(spec.count, spec.radius, damage);
+      h.sound('flames_ignite');
+      h.loop('flames_loop', FX.flamesLife);
     } else if (id === 'holy') {
       for (let i = 0; i < spec.count; i++) this.schedule('holy', i * FX.holyGap, 0, 0, spec.radius, damage);
     } else if (id === 'frost') {
@@ -260,6 +275,8 @@ export class SpecialWeapons {
       ease: 'linear',
       originY: 0.78,
     });
+    // Siulan meteor mulai saat meteor muncul di atas, supaya mendarat bersama ledakannya
+    this.schedule('meteorCue', delay, x, y, r, damage);
     this.schedule('meteor', delay + fall, x, y, r, damage);
   }
 
@@ -294,6 +311,8 @@ export class SpecialWeapons {
       });
     }
     h.debris(x, y, 26, [hex(F.fire), hex(F.fireCore), hex(F.scorch)]);
+    h.sound('meteor_impact', x, y);
+    h.loop('meteor_burn', FX.craterLife);
     h.shake(280, 0.016);
     h.slowMotion(0.09);
     h.flash(x, y, hex(F.fire), 3, r * 2.2);
@@ -352,6 +371,7 @@ export class SpecialWeapons {
 
   private arrowHit(s: Strike) {
     const h = this.host;
+    h.sound('rain_thud', s.x, s.y);
     h.eachInRadius(s.x, s.y, s.r, (e, _d, dx, dy) => h.hit(e, s.damage, dx, dy, 130));
     h.fx.spawn({ key: 'fxRainArrow', x: s.x, y: s.y - 8, life: 0.55, depth: DEPTH_GROUND + 0.3, s0: RAIN_ARROW, s1: RAIN_ARROW, a0: 1, a1: 0, rotation: Math.PI / 2 - 0.14, ease: 'linear' });
     h.fx.spawn({ key: 'puff', x: s.x, y: s.y, life: 0.3, depth: DEPTH_GROUND + 0.2, s0: 0.45, s1: 1.1, a0: 0.8, a1: 0, tint: hex(F.dust) });
@@ -382,6 +402,7 @@ export class SpecialWeapons {
     if (!target) return;
     const x = target.img.x;
     const y = target.img.y;
+    h.sound('thunder_crack', x, y);
     let arcs = 0;
     h.eachInRadius(x, y, s.r, (e, dist, dx, dy) => {
       if (arcs < 3 && e !== target && dist > 12) {
@@ -404,6 +425,7 @@ export class SpecialWeapons {
     const h = this.host;
     const x = h.player.x;
     const y = h.player.y;
+    h.sound('moon_slash');
     this.waves.push({ x, y, r: 12, maxR: s.r, damage: s.damage, hit: new Set() });
     const life = s.r / FX.moonSpeed;
     h.fx.spawn({ key: 'fxMoon', x, y, life, depth: DEPTH_AIR, s0: ringScale(12), s1: ringScale(s.r), a0: 1, a1: 0.15, spin: 3.2, add: true, ease: 'linear' });
@@ -486,6 +508,7 @@ export class SpecialWeapons {
       if (r.img) r.img.rotation = Math.atan2(r.vy, r.vx);
       if (r.target && r.cool <= 0 && d < r.target.radius + 12) {
         h.hit(r.target, r.damage, dx / d, dy / d, 120);
+        h.sound('raven_peck', r.x, r.y);
         r.cool = FX.ravenCooldown;
         r.target = null;
       }
@@ -587,6 +610,7 @@ export class SpecialWeapons {
     const y = h.player.y;
     h.eachInRadius(x, y, s.r, (e, _d, dx, dy) => h.hit(e, s.damage, dx, dy, 520));
     h.heal(FX.holyHeal);
+    h.sound('holy_pulse');
     h.fx.spawn({ key: 'fxPillar', x, y: y + 18, life: 0.55, depth: DEPTH_AIR, s0: INV * 1.1, s1: INV * 1.6, sy0: INV * 1.1, sy1: INV * 1.3, a0: 1, a1: 0, originY: 1, add: true, ease: 'linear' });
     h.fx.spawn({ key: 'fxShock', x, y, life: 0.42, depth: DEPTH_GROUND + 0.1, s0: ringScale(s.r * 0.2), s1: ringScale(s.r), a0: 0.95, a1: 0, tint: hex(F.holy), add: true });
     h.shake(110, 0.005);
@@ -599,6 +623,7 @@ export class SpecialWeapons {
     const h = this.host;
     const x = h.player.x;
     const y = h.player.y;
+    h.sound('frost_cast');
     h.eachInRadius(x, y, radius, (e) => h.slow(e, 0, seconds));
     h.fx.spawn({ key: 'fxShock', x, y, life: 0.5, depth: DEPTH_GROUND + 0.1, s0: ringScale(radius * 0.15), s1: ringScale(radius), a0: 1, a1: 0, tint: hex(F.frost), add: true });
     h.flash(x, y, hex(F.frost), 1.8, radius * 1.5);
@@ -608,6 +633,7 @@ export class SpecialWeapons {
 
   private shatter(s: Strike) {
     const h = this.host;
+    h.sound('frost_shatter');
     let shards = 0;
     h.eachInRadius(s.x, s.y, s.r, (e, _d, dx, dy) => {
       h.hit(e, s.damage, dx, dy, 300);
@@ -634,12 +660,14 @@ export class SpecialWeapons {
         this.schedule('quake', k * FX.quakeGap, px + Math.cos(w) * d, py + Math.sin(w) * d, FX.quakeBlast, damage);
       }
     }
+    h.sound('quake_start');
     h.shake(320, 0.012);
     h.slowMotion(0.06);
   }
 
   private quakeBlast(s: Strike) {
     const h = this.host;
+    h.sound('quake_rock', s.x, s.y);
     h.eachInRadius(s.x, s.y, s.r, (e, _d, dx, dy) => h.hit(e, s.damage, dx, dy, 340));
     h.fx.spawn({ key: 'fxCrater', x: s.x, y: s.y, life: 1.1, depth: DEPTH_GROUND, s0: ringScale(s.r * 0.75), s1: ringScale(s.r * 0.8), a0: 0.85, a1: 0, ease: 'linear' });
     h.fx.spawn({ key: 'puff', x: s.x, y: s.y, vy: -28, life: 0.5, depth: DEPTH_GROUND + 0.3, s0: 0.5, s1: 1.2, a0: 0.65, a1: 0, spin: 2, tint: hex(F.dust) });

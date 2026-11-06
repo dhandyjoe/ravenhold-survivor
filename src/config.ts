@@ -9,7 +9,7 @@ export const COLORS = {
   wyrm: '#ff8a3c',
   special: '#ffcf6b',
   number: '#fff4d6',
-  gem: '#86f7c0',
+  gem: '#6fd467',
   gemBig: '#ffe27a',
   hp: '#86f7c0',
   hpLow: '#ff7b8a',
@@ -507,3 +507,32 @@ export const SPECIAL_FX = {
 /** XP yang dibutuhkan untuk naik dari `level` ke level berikutnya. */
 export const xpForLevel = (level: number) =>
   Math.round(6 + (level - 1) * 5 + Math.pow(level - 1, 1.6) + Math.pow(Math.max(0, level - 15), 2.03));
+
+/**
+ * Pengaturan umum audio. Takaran tiap suara (kerasnya, batas per detik) ada di `audioCatalog.ts`,
+ * karena jumlahnya puluhan dan harus sejajar dengan daftar ID-nya.
+ */
+export const AUDIO = {
+  musicVolume: 0.8, // bawaan; pemain mengubahnya lewat penggeser
+  sfxVolume: 0.85,
+  maxVoices: 24,
+  maxVoicesLow: 16, // saat kualitas turun ke tingkat rendah
+  poolPerKey: 3, // salinan satu file yang boleh berbunyi bersamaan
+  pitchJitter: 0.06, // variasi nada acak ±6%
+  hearRange: 520, // jarak dunia sampai suara tinggal sebagian kecil
+  hearFloor: 0.22, // kerasnya di ujung jangkauan
+  panWidth: 0.7, // pan maksimal di tepi pandang
+  crossfade: 3, // detik, pergantian musik dan suasana
+  ambientVolume: 0.5, // bagian dari volume musik
+  pauseDuck: 0.4, // musik saat jeda atau memilih kartu
+  duckFade: 0.25, // detik
+  stingerDuck: { seconds: 2.4, depth: 0.55 },
+  bossDuck: { seconds: 3, depth: 0.6 },
+  lookahead: 30, // detik sebelum trek berikutnya mulai dimuat
+  bossWindow: 150, // detik trek bos tetap dipertahankan setelah bos muncul
+  senjaAt: 360,
+  malamAt: 630,
+  lowHpFraction: 0.3,
+  heartbeatEvery: 1.05,
+  crowdKills: 6, // tumbang dalam satu frame sampai dianggap kerumunan
+};
